@@ -1,13 +1,12 @@
 //#include <stdio.h>
-#include "Headers/load_file.h"
+#include "Headers/VDIFile.h"
 #include "Headers/Structs.h"
 #include "Headers/Util.h"
 
-int main() {
-    Header *head = (Header*)malloc(sizeof (Header));
-    openFile(head);
-    printHeader(head);
+#define PATH "C:\\Users\\crisc\\VirtualBox VMs\\Ubuntu\\Ubuntu.vdi"
 
-    free(head);
+int main() {
+    VDIFile* vdi = vdiOpen(PATH);
+
     return 0;
 }

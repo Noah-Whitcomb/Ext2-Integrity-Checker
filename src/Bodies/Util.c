@@ -30,6 +30,6 @@ void printHeader(Header* head)
 
     printBytes(head->imageDescription, 32, "IMAGE DESCRIPTION - BYTES");
 
-    printf("OFFSET BLOCKS - INT\n%i\n", head->offsetBlocks);
-    printBytes((uint8_t *)&head->offsetBlocks, 4, "OFFSET BLOCKS - BYTES");
+    printf("OFFSET BLOCKS - INT\n%i\n", head->offsetPages);
+    printBytes((uint8_t *)&head->offsetPages, 4, "OFFSET BLOCKS - BYTES");
 }

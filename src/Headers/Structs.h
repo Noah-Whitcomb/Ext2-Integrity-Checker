@@ -1,15 +1,10 @@
-//
-// Created by crisc on 1/28/2019.
-//
-
 #ifndef EXT2_CHECKER_STRUCTS_H
 #define EXT2_CHECKER_STRUCTS_H
 
 #include <stdint.h>
+#include <stdio.h>
 
-typedef struct header Header;
-
-struct header
+typedef struct
 {
     uint8_t preHeader[72];
     int headerSize;
@@ -17,8 +12,17 @@ struct header
     int imageFlags;
     uint8_t imageDescription[32];
     //everything below might be in a different struct
-    int offsetBlocks;
+    int offsetPages;
 
-};
+} Header;
+
+typedef struct
+{
+
+    Header* header;
+    int fileDescriptor;
+    FILE* f;
+
+} VDIFile;
 
 #endif //EXT2_CHECKER_STRUCTS_H

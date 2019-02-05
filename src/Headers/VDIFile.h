@@ -11,10 +11,10 @@
 #include <ctype.h>
 #include <stdint.h>
 
-#include "../Headers/load_file.h"
+#include "VDIFile.h"
 #include "../Headers/Structs.h"
 #include "Util.h"
 
-void openFile(Header *head);
+VDIFile* vdiOpen(char* filename);
 
 #endif //EXT2_CHECKER_LOAD_FILE_H
