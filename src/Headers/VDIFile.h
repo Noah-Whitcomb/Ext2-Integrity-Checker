@@ -16,5 +16,6 @@
 #include "Util.h"
 
 VDIFile* vdiOpen(char* filename);
+void vdiClose(VDIFile* vdi);
 
 #endif //EXT2_CHECKER_LOAD_FILE_H
