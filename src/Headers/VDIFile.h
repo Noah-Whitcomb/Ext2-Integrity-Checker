@@ -17,5 +17,6 @@
 
 VDIFile* vdiOpen(char* filename);
 void vdiClose(VDIFile* vdi);
+void vdiSeek(VDIFile* vdi, long long offset, int anchor);
 
 #endif //EXT2_CHECKER_LOAD_FILE_H

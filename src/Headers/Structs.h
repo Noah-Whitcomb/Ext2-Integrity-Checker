@@ -44,6 +44,7 @@ typedef struct
     Header* header;
     int fileDescriptor;
     FILE* f;
+    long long cursor;
 
 } VDIFile;
 

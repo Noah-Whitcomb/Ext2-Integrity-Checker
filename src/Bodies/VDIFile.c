@@ -42,29 +42,35 @@ VDIFile* vdiOpen(char* filename){
     fread((void *)vdi->header->UUIDLastSnap, 1, 16, vdi->f);
     fread((void *)vdi->header->UUIDLink, 1, 16, vdi->f);
     fread((void *)vdi->header->UUIDParent, 1, 16, vdi->f);
+    fread((void *)vdi->header->shit, 1, 56, vdi->f);
+
+    // set cursor to boundary of header (1 MB or 0x100000)
+    vdi->cursor = 0x100000;
 
     return vdi;
 }
 
-void vdiSeek(VDIFile* vdi, uint32_t offset, int anchor)
+void vdiSeek(VDIFile* vdi, long long offset, int anchor)
 {
-    if(anchor == 0)
+    if(anchor == VDI_SET)
     {
-        fseek(vdi->f, offset+vdi->header->offsetData,SEEK_SET);
+        vdi->cursor = 0x100000 + offset;
     }
-    if(anchor == 1)
+    if(anchor == VDI_CUR)
     {
-        fseek(vdi->f, offset, SEEK_CUR);
+        vdi->cursor += offset;
     }
-    if(anchor == 2)
+    if(anchor == VDI_END)
     {
-        fseek(vdi->f, offset+vdi->header->diskSize, SEEK_END)
+        // cursor should be negative
+        vdi->cursor = offset + vdi->header->diskSize;
     }
 }
 
 void vdiClose(VDIFile* vdi)
 {
     free(vdi->header);
+    free(vdi->header->diskGeometry);
     fclose(vdi->f);
     free(vdi);
 }
