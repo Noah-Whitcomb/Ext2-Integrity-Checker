@@ -2,21 +2,21 @@
 
 void readSuperBlock(VDIFile* vdi)
 {
-    uint32_t totalinodes; fread((void*)vdi->superPage->totalinodes, 4, 1, vdi->f);
-    uint32_t totalpages;
-    uint32_t superuserpages;
-    uint32_t unallocatedpages;
-    uint32_t unallocatedinodes;
-    uint32_t superpageknumber;
-    uint32_t log2pagesize;
-    uint32_t log2fragmentsize;
-    uint32_t pagespergroup;
-    uint32_t fragmentspergroup;
-    uint32_t inodespergroup;
-    uint32_t lastmounttime;
-    uint32_t lastwritetime;
-    //number of times mounted since last consistency check
-    uint16_t timesmounted;
+    fread((void*)&vdi->superPage->totalinodes, 4, 1, vdi->f);
+    fread((void*)&vdi->superPage->totalpages, 4, 1, vdi->f);
+    fread((void*)&vdi->superPage->superuserpages, 4, 1, vdi->f);
+    fread((void*)&vdi->superPage->unallocatedpages, 4, 1, vdi->f);
+    fread((void*)&vdi->superPage->unallocatedinodes, 4, 1, vdi->f);
+    fread((void*)&vdi->superPage->superpageknumber, 4, 1, vdi->f);
+    fread((void*)&vdi->superPage->log2pagesize, 4, 1, vdi->f);
+    fread((void*)&vdi->superPage->log2fragmentsize, 4, 1, vdi->f);
+    fread((void*)&vdi->superPage->pagespergroup, 4, 1, vdi->f);
+    fread((void*)&vdi->superPage->fragmentspergroup, 4, 1, vdi->f);
+    fread((void*)&vdi->superPage->inodespergroup, 4, 1, vdi->f);
+    fread((void*)&vdi->superPage->lastmounttime, 4, 1, vdi->f);
+    fread((void*)&vdi->superPage->lastwritetime, 4, 1, vdi->f);
+    //number of times mounted since last consistency
+    fread((void*)&vdi->superPage->timesmounted, 2, 1, vdi->f);
     // number of mounts allowed before consistency check
     uint16_t mountsallowed;
     // should be 0xEF53
