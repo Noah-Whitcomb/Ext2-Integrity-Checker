@@ -4,7 +4,7 @@
 
 #include "../Headers/Util.h"
 
-void printBytes(uint8_t* buffer, size_t size, char* description)
+void printBytes(const uint8_t* buffer, size_t size, char* description)
 {
     printf("\n%s\n", description);
     for(size_t i = 0; i<size; i++)
@@ -32,4 +32,33 @@ void printHeader(Header* head)
 
     printf("OFFSET BLOCKS - INT\n%i\n", head->offsetPages);
     printBytes((uint8_t *)&head->offsetPages, 4, "OFFSET BLOCKS - BYTES");
+}
+
+uint32_t getNumBlockGroups(const VDIFile* vdi)
+{
+    uint32_t numpagegroups1;
+    if(vdi->superPage->totalpages%vdi->superPage->pagespergroup == 0)
+    {
+        numpagegroups1 = vdi->superPage->totalpages/vdi->superPage->pagespergroup;
+    }
+    else
+    {
+        numpagegroups1 =  vdi->superPage->totalpages/vdi->superPage->pagespergroup + 1;
+    }
+
+    int numpagegroups2;
+    if(vdi->superPage->totalinodes%vdi->superPage->inodespergroup == 0)
+    {
+        numpagegroups2 = vdi->superPage->totalinodes/vdi->superPage->inodespergroup;
+    }
+    else
+    {
+        numpagegroups2 =  vdi->superPage->totalinodes/vdi->superPage->inodespergroup + 1;
+    }
+
+    if(numpagegroups1 == numpagegroups2)
+    {
+        return numpagegroups1;
+    }
+    else return 0;
 }

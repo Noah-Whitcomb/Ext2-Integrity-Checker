@@ -6,6 +6,7 @@ VDIFile* vdiOpen(char* filename){
     VDIFile * vdi = (VDIFile*)malloc(sizeof (VDIFile));
     vdi->header = (Header*)malloc(sizeof (Header));
     vdi->header->diskGeometry = (DiskGeometry*)malloc( sizeof(DiskGeometry));
+    vdi->superPage = (SuperPage*)malloc(sizeof(SuperPage));
 
     printf("%s\n",filename);
     vdi->f = fopen(filename, "rb");
@@ -82,6 +83,7 @@ void vdiClose(VDIFile* vdi)
 {
     free(vdi->header);
     free(vdi->header->diskGeometry);
+    free(vdi->superPage);
     fclose(vdi->f);
     free(vdi);
 }

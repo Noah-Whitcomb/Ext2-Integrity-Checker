@@ -10,6 +10,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdint.h>
+#include <assert.h>
 
 #include "../Headers/Structs.h"
 #include "Util.h"

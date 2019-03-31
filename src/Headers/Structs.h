@@ -78,6 +78,8 @@ typedef struct
     // group id that can use reserved blocks
     uint16_t groupid;
 
+    uint32_t numpagegroups;
+
 } SuperPage;
 
 typedef struct

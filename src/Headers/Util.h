@@ -9,7 +9,8 @@
 #include "stdint.h"
 #include "stdio.h"
 
-void printBytes(uint8_t* buffer, size_t size, char* description);
+void printBytes(const uint8_t* buffer, size_t size, char* description);
+uint32_t getNumBlockGroups(const VDIFile* vdi);
 void printHeader(Header* head);
 
 #endif //EXT2_CHECKER_UTIL_H
