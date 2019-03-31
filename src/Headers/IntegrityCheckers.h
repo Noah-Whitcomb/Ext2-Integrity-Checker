@@ -3,6 +3,6 @@
 
 #include "VDIFile.h"
 
-void readSuperBlock(VDIFile* vdi);
+void readSuperBlock(VDIFile* vdi, uint8_t* superblock);
 
 #endif //EXT2_CHECKER_INTEGRITYCHECKERS_H
