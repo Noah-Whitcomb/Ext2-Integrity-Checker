@@ -1,46 +1,8 @@
-#ifndef EXT2_CHECKER_STRUCTS_H
-#define EXT2_CHECKER_STRUCTS_H
+#include "../Headers/IntegrityCheckers.h"
 
-#include <stdint.h>
-#include <stdio.h>
-
-typedef struct
+void readSuperBlock(VDIFile* vdi)
 {
-    uint32_t cylinders;
-    uint32_t heads;
-    uint32_t sectors;
-    uint32_t sectorSize;
-} DiskGeometry;
-
-typedef struct
-{
-    //block = pages
-    // TODO: make sure all types are correct
-    uint8_t preHeader[72];
-    uint32_t headerSize;
-    uint32_t imageType;
-    uint32_t imageFlags;
-    uint8_t imageDescription[32];
-    DiskGeometry* diskGeometry;
-    uint32_t offsetPages;
-    uint32_t offsetData;
-    uint32_t unused;
-    long long diskSize;
-    uint32_t pageSize;
-    uint32_t pageExtraData;
-    uint32_t pagesInHDD;
-    uint32_t pagesAllocated;
-    uint8_t UUID[16];
-    uint8_t UUIDLastSnap[16];
-    uint8_t UUIDLink[16];
-    uint8_t UUIDParent[16];
-    uint8_t shit[56];
-
-} Header;
-
-typedef struct
-{
-    uint32_t totalinodes;
+    uint32_t totalinodes; fread((void*)vdi->superPage->totalinodes, 4, 1, vdi->f);
     uint32_t totalpages;
     uint32_t superuserpages;
     uint32_t unallocatedpages;
@@ -77,18 +39,5 @@ typedef struct
     uint16_t userid;
     // group id that can use reserved blocks
     uint16_t groupid;
+}
 
-} SuperPage;
-
-typedef struct
-{
-
-    Header* header;
-    int fileDescriptor;
-    FILE* f;
-    long long cursor;
-    SuperPage* superPage;
-
-} VDIFile;
-
-#endif //EXT2_CHECKER_STRUCTS_H

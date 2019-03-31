@@ -5,7 +5,6 @@
 #ifndef EXT2_CHECKER_UTIL_H
 #define EXT2_CHECKER_UTIL_H
 
-#include "../Headers/Util.h"
 #include "../Headers/Structs.h"
 #include "stdint.h"
 #include "stdio.h"

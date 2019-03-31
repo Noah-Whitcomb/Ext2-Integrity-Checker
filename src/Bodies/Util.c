@@ -6,7 +6,7 @@
 
 void printBytes(uint8_t* buffer, size_t size, char* description)
 {
-    printf("%s\n", description);
+    printf("\n%s\n", description);
     for(size_t i = 0; i<size; i++)
     {
         printf("%X ", buffer[i]);

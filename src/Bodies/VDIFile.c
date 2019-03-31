@@ -1,7 +1,4 @@
 #include "../Headers/VDIFile.h"
-#define VDI_SET 0
-#define VDI_CUR 1
-#define VDI_END 2
 
 void vdiClose(VDIFile *vdi);
 
@@ -28,6 +25,11 @@ VDIFile* vdiOpen(char* filename){
     fseek(vdi->f, 0x154, SEEK_SET);
     fread((void *)&vdi->header->offsetPages, 4, 1, vdi->f);
     fread((void *)&vdi->header->offsetData, 4, 1, vdi->f);
+
+    //TODO make sure this works (ask kramer sometime)
+    // make sure offset data accounts for header boundary (1 MB or 0x100000)
+    vdi->header->offsetData += 0x100000;
+
     fread((void *)&vdi->header->diskGeometry->cylinders, 4, 1, vdi->f);
     fread((void *)&vdi->header->diskGeometry->heads, 4, 1, vdi->f);
     fread((void *)&vdi->header->diskGeometry->sectors, 4, 1, vdi->f);
@@ -44,9 +46,6 @@ VDIFile* vdiOpen(char* filename){
     fread((void *)vdi->header->UUIDParent, 1, 16, vdi->f);
     fread((void *)vdi->header->shit, 1, 56, vdi->f);
 
-    // set cursor to boundary of header (1 MB or 0x100000)
-    vdi->cursor = 0x100000;
-
     return vdi;
 }
 
@@ -54,7 +53,7 @@ void vdiSeek(VDIFile* vdi, long long offset, int anchor)
 {
     if(anchor == VDI_SET)
     {
-        vdi->cursor = 0x100000 + offset;
+        vdi->cursor = vdi->header->offsetData + offset;
     }
     if(anchor == VDI_CUR)
     {
@@ -67,6 +66,18 @@ void vdiSeek(VDIFile* vdi, long long offset, int anchor)
     }
 }
 
+// call vdiSeek before vdiRead at all times
+void vdiRead(VDIFile* vdi, uint8_t* buffer, size_t nbytes)
+{
+    // TODO: change this to dynamic if we get to it
+    long long page = vdi->cursor/vdi->header->pageSize;
+    long long offset = vdi->cursor%vdi->header->pageSize;
+
+    long long position = page*vdi->header->pageSize+offset;
+    fseek(vdi->f, position, SEEK_SET);
+    fread(buffer, 1, nbytes, vdi->f);
+}
+
 void vdiClose(VDIFile* vdi)
 {
     free(vdi->header);
@@ -74,3 +85,5 @@ void vdiClose(VDIFile* vdi)
     fclose(vdi->f);
     free(vdi);
 }
+
+
