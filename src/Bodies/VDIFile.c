@@ -7,6 +7,7 @@ VDIFile* vdiOpen(char* filename){
     vdi->header = (Header*)malloc(sizeof (Header));
     vdi->header->diskGeometry = (DiskGeometry*)malloc( sizeof(DiskGeometry));
     vdi->superPage = (SuperPage*)malloc(sizeof(SuperPage));
+    vdi->blockGroupDescriptorTable = NULL;
 
     printf("%s\n",filename);
     vdi->f = fopen(filename, "rb");
@@ -81,8 +82,17 @@ void vdiRead(VDIFile* vdi, uint8_t* buffer, size_t nbytes)
 
 void vdiClose(VDIFile* vdi)
 {
-    free(vdi->header);
+    if(vdi->blockGroupDescriptorTable != NULL)
+    {
+        for (size_t i = 0; i < vdi->superPage->numpagegroups; i++)
+        {
+            free(vdi->blockGroupDescriptorTable[i]);
+        }
+        free(vdi->blockGroupDescriptorTable);
+    }
+
     free(vdi->header->diskGeometry);
+    free(vdi->header);
     free(vdi->superPage);
     fclose(vdi->f);
     free(vdi);

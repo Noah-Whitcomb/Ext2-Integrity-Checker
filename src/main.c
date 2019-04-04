@@ -15,21 +15,15 @@ int main(int argc, char** argv) {
     if (vdi == NULL)
     {
         printf("Could not read file, fix it you fucking idiot");
-        vdiClose(vdi);
         return 1;
     }
 
-    //get superblock
+    //get superBlock
     vdiSeek(vdi, 0x400, VDI_SET);
-    uint8_t* superblock = (uint8_t*)malloc(1024);
-    vdiRead(vdi, superblock, 1024);
-    readSuperBlock(vdi, superblock);
-    free(superblock);
-
-
-    int i = 1024 << vdi->superPage->log2pagesize;
-    printf("page size from superblock: %d\n", i);
-    printf("number of page descriptors: %d\n", vdi->superPage->numpagegroups);
+    uint8_t* superBlock = (uint8_t*)malloc(1024);
+    vdiRead(vdi, superBlock, 1024);
+    readSuperBlock(vdi, superBlock);
+    free(superBlock);
 
     if (vdi->superPage->magic != 0xef53)
     {
@@ -39,8 +33,18 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    printf("ext2 page size: %d\n",vdi->superPage->pageSize);
+
     //get block descriptor table
-    vdiSeek(vdi,0x800, VDI_SET);
+    vdiSeek(vdi,vdi->superPage->pageSize, VDI_CUR);
+    uint8_t * blockDescTable = (uint8_t*)malloc(32*vdi->superPage->numpagegroups);
+    vdiRead(vdi, blockDescTable, 32*vdi->superPage->numpagegroups);
+    readBlockDescTable(vdi, blockDescTable);
+    free(blockDescTable);
+    for(size_t i = 0;i<vdi->superPage->numpagegroups;i++)
+    {
+        printf("number of directories in group %d: %d\n", i, vdi->blockGroupDescriptorTable[i]->numDirectories);
+    }
 
     vdiClose(vdi);
     return 0;

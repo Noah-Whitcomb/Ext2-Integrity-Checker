@@ -35,6 +35,8 @@ void readSuperBlock(VDIFile* vdi, uint8_t* superblock)
         assert(1);
     }
 
+    vdi->superPage->pageSize = 1024u << vdi->superPage->log2pagesize;
+
     //TODO: if majorportion >= 1, read in extended vdi shit (ask kramer)
 //    fread((void*)&vdi->superPage->totalinodes, 4, 1, vdi->f);
 //    fread((void*)&vdi->superPage->totalpages, 4, 1, vdi->f);
@@ -63,3 +65,21 @@ void readSuperBlock(VDIFile* vdi, uint8_t* superblock)
 //    fread((void*)&vdi->superPage->groupid, 2, 1, vdi->f);
 }
 
+void readBlockDescTable(VDIFile* vdi, uint8_t* blockDescTable)
+{
+    vdi->blockGroupDescriptorTable = (BlockGroupDescriptor**)malloc(vdi->superPage->numpagegroups*sizeof(BlockGroupDescriptor));
+    for(size_t i = 0; i < vdi->superPage->numpagegroups; i++)
+    {
+        vdi->blockGroupDescriptorTable[i] = (BlockGroupDescriptor*)malloc(sizeof(BlockGroupDescriptor));
+    }
+
+    for(size_t i = 0;i<vdi->superPage->numpagegroups;i++)
+    {
+        memcpy(&vdi->blockGroupDescriptorTable[i]->blockUsageBitmap, blockDescTable + i*32, 4);
+        memcpy(&vdi->blockGroupDescriptorTable[i]->inodeUsageBitmap, blockDescTable + i*32 + 4, 4);
+        memcpy(&vdi->blockGroupDescriptorTable[i]->inodeTableAddress, blockDescTable + i*32 + 8, 4);
+        memcpy(&vdi->blockGroupDescriptorTable[i]->numUnallocatedBlocks, blockDescTable + i*32 + 12, 2);
+        memcpy(&vdi->blockGroupDescriptorTable[i]->numUnallocatediNodes, blockDescTable + i*32 + 14, 2);
+        memcpy(&vdi->blockGroupDescriptorTable[i]->numDirectories, blockDescTable + i*32 + 16, 2);
+    }
+}

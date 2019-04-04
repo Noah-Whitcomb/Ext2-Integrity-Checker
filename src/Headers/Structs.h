@@ -40,6 +40,7 @@ typedef struct
 
 typedef struct
 {
+    //TODO: refactor all of these to camel case
     uint32_t totalinodes;
     uint32_t totalpages;
     uint32_t superuserpages;
@@ -79,12 +80,28 @@ typedef struct
     uint16_t groupid;
 
     uint32_t numpagegroups;
+    // left shift 1024 buy log2PageSize to get page size
+    uint32_t pageSize;
 
 } SuperPage;
 
 typedef struct
 {
+    uint32_t blockUsageBitmap;
+    uint32_t inodeUsageBitmap;
+    uint32_t inodeTableAddress;
+    uint16_t numUnallocatedBlocks;
+    uint16_t numUnallocatediNodes;
+    uint16_t numDirectories;
+    // some unused bytes here
 
+    //TODO: refactor all block shit to page if it matters
+
+}BlockGroupDescriptor;
+
+typedef struct
+{
+    BlockGroupDescriptor ** blockGroupDescriptorTable;
     Header* header;
     int fileDescriptor;
     FILE* f;
