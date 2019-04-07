@@ -67,7 +67,7 @@ void readSuperBlock(VDIFile* vdi, uint8_t* superblock)
 
 void readBlockDescTable(VDIFile* vdi, uint8_t* blockDescTable)
 {
-    vdi->blockGroupDescriptorTable = (BlockGroupDescriptor**)malloc(vdi->superPage->numpagegroups*sizeof(BlockGroupDescriptor));
+    vdi->blockGroupDescriptorTable = (BlockGroupDescriptor**)calloc(vdi->superPage->numpagegroups, sizeof(BlockGroupDescriptor));
     for(size_t i = 0; i < vdi->superPage->numpagegroups; i++)
     {
         vdi->blockGroupDescriptorTable[i] = (BlockGroupDescriptor*)malloc(sizeof(BlockGroupDescriptor));

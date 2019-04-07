@@ -19,34 +19,34 @@ VDIFile* vdiOpen(char* filename){
     }
 
     //error check fread??
-    fread((void *)vdi->header->preHeader, 1, 72, vdi->f);
-    fread((void *)&vdi->header->headerSize, 4, 1, vdi->f);
-    fread((void *)&vdi->header->imageType, 4, 1, vdi->f);
-    fread((void *)&vdi->header->imageFlags, 4, 1, vdi->f);
-    fread((void *)vdi->header->imageDescription, 1, 32, vdi->f);
+    fread(vdi->header->preHeader, 1, 72, vdi->f);
+    fread(&vdi->header->headerSize, 4, 1, vdi->f);
+    fread(&vdi->header->imageType, 4, 1, vdi->f);
+    fread(&vdi->header->imageFlags, 4, 1, vdi->f);
+    fread(vdi->header->imageDescription, 1, 32, vdi->f);
     fseek(vdi->f, 0x154, SEEK_SET);
-    fread((void *)&vdi->header->offsetPages, 4, 1, vdi->f);
-    fread((void *)&vdi->header->offsetData, 4, 1, vdi->f);
+    fread(&vdi->header->offsetPages, 4, 1, vdi->f);
+    fread(&vdi->header->offsetData, 4, 1, vdi->f);
 
-    //TODO make sure this works (ask kramer sometime)
+    //TODO make sure this is good (ask kramer sometime)
     // make sure offset data accounts for header boundary (1 MB or 0x100000)
     vdi->header->offsetData += 0x100000;
 
-    fread((void *)&vdi->header->diskGeometry->cylinders, 4, 1, vdi->f);
-    fread((void *)&vdi->header->diskGeometry->heads, 4, 1, vdi->f);
-    fread((void *)&vdi->header->diskGeometry->sectors, 4, 1, vdi->f);
-    fread((void *)&vdi->header->diskGeometry->sectorSize, 4, 1, vdi->f);
-    fread((void *)&vdi->header->unused, 4, 1, vdi->f);
-    fread((void *)&vdi->header->diskSize, 8, 1, vdi->f);
-    fread((void *)&vdi->header->pageSize, 4, 1, vdi->f);
-    fread((void *)&vdi->header->pageExtraData, 4, 1, vdi->f);
-    fread((void *)&vdi->header->pagesInHDD, 4, 1, vdi->f);
-    fread((void *)&vdi->header->pagesAllocated, 4, 1, vdi->f);
-    fread((void *)vdi->header->UUID, 1, 16, vdi->f);
-    fread((void *)vdi->header->UUIDLastSnap, 1, 16, vdi->f);
-    fread((void *)vdi->header->UUIDLink, 1, 16, vdi->f);
-    fread((void *)vdi->header->UUIDParent, 1, 16, vdi->f);
-    fread((void *)vdi->header->shit, 1, 56, vdi->f);
+    fread(&vdi->header->diskGeometry->cylinders, 4, 1, vdi->f);
+    fread(&vdi->header->diskGeometry->heads, 4, 1, vdi->f);
+    fread(&vdi->header->diskGeometry->sectors, 4, 1, vdi->f);
+    fread(&vdi->header->diskGeometry->sectorSize, 4, 1, vdi->f);
+    fread(&vdi->header->unused, 4, 1, vdi->f);
+    fread(&vdi->header->diskSize, 8, 1, vdi->f);
+    fread(&vdi->header->pageSize, 4, 1, vdi->f);
+    fread(&vdi->header->pageExtraData, 4, 1, vdi->f);
+    fread(&vdi->header->pagesInHDD, 4, 1, vdi->f);
+    fread(&vdi->header->pagesAllocated, 4, 1, vdi->f);
+    fread(vdi->header->UUID, 1, 16, vdi->f);
+    fread(vdi->header->UUIDLastSnap, 1, 16, vdi->f);
+    fread(vdi->header->UUIDLink, 1, 16, vdi->f);
+    fread(vdi->header->UUIDParent, 1, 16, vdi->f);
+    fread(vdi->header->shit, 1, 56, vdi->f);
 
     return vdi;
 }

@@ -20,15 +20,16 @@ int main(int argc, char** argv) {
 
     //get superBlock
     vdiSeek(vdi, 0x400, VDI_SET);
-    uint8_t* superBlock = (uint8_t*)malloc(1024);
-    vdiRead(vdi, superBlock, 1024);
+    uint8_t* superBlock = (uint8_t*)malloc(SUPERBLOCK_SIZE);
+    vdiRead(vdi, superBlock, SUPERBLOCK_SIZE);
     readSuperBlock(vdi, superBlock);
     free(superBlock);
 
+    // check magic of ext2 filesystem
     if (vdi->superPage->magic != 0xef53)
     {
         printBytes((uint8_t*)&vdi->superPage->magic, 2, "Magic");
-        printf("fuck, you suck at programming and life");
+        printf("fuck, you suck at programming and life. The magic isn't right. \n holy fuck you should have gotten this already");
         vdiClose(vdi);
         return 1;
     }
@@ -37,10 +38,11 @@ int main(int argc, char** argv) {
 
     //get block descriptor table
     vdiSeek(vdi,vdi->superPage->pageSize, VDI_CUR);
-    uint8_t * blockDescTable = (uint8_t*)malloc(32*vdi->superPage->numpagegroups);
-    vdiRead(vdi, blockDescTable, 32*vdi->superPage->numpagegroups);
+    uint8_t* blockDescTable = (uint8_t*)calloc(BLOCK_DESCRIPTOR_SIZE, vdi->superPage->numpagegroups);
+    vdiRead(vdi, blockDescTable, BLOCK_DESCRIPTOR_SIZE*vdi->superPage->numpagegroups);
     readBlockDescTable(vdi, blockDescTable);
     free(blockDescTable);
+
     for(size_t i = 0;i<vdi->superPage->numpagegroups;i++)
     {
         printf("number of directories in group %d: %d\n", i, vdi->blockGroupDescriptorTable[i]->numDirectories);
