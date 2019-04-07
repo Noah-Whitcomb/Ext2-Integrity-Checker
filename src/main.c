@@ -18,12 +18,11 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    //get superBlock
+    //get superBlock, 1024 is superblock size always
+    uint8_t superBlock [0x400];
     vdiSeek(vdi, 0x400, VDI_SET);
-    uint8_t* superBlock = (uint8_t*)malloc(SUPERBLOCK_SIZE);
-    vdiRead(vdi, superBlock, SUPERBLOCK_SIZE);
+    vdiRead(vdi, superBlock, 0x400);
     readSuperBlock(vdi, superBlock);
-    free(superBlock);
 
     // check magic of ext2 filesystem
     if (vdi->superPage->magic != 0xef53)
@@ -36,17 +35,21 @@ int main(int argc, char** argv) {
 
     printf("ext2 page size: %d\n",vdi->superPage->pageSize);
 
+    //TODO: ask kramer about where block group descriptor table is depending on block size
+
     //get block descriptor table
-    vdiSeek(vdi,vdi->superPage->pageSize, VDI_CUR);
-    uint8_t* blockDescTable = (uint8_t*)calloc(BLOCK_DESCRIPTOR_SIZE, vdi->superPage->numpagegroups);
-    vdiRead(vdi, blockDescTable, BLOCK_DESCRIPTOR_SIZE*vdi->superPage->numpagegroups);
+    uint8_t blockDescTable [vdi->superPage->pageSize];
+    fetchBlock(vdi, blockDescTable, 2);
     readBlockDescTable(vdi, blockDescTable);
-    free(blockDescTable);
 
     for(size_t i = 0;i<vdi->superPage->numpagegroups;i++)
     {
-        printf("number of directories in group %d: %d\n", i, vdi->blockGroupDescriptorTable[i]->numDirectories);
+        printf("inode table address of block group %d: %d\n", i, vdi->blockGroupDescriptorTable[i]->inodeTableAddress);
     }
+
+
+    uint8_t iNodeBuffer[128];
+    fetchInode(vdi, iNodeBuffer, 2);
 
     vdiClose(vdi);
     return 0;

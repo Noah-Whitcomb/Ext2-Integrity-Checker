@@ -24,4 +24,6 @@ void vdiClose(VDIFile* vdi);
 void vdiSeek(VDIFile* vdi, long long offset, int anchor);
 void vdiRead(VDIFile* vdi, uint8_t* buffer, size_t nbytes);
 
+void fetchBlock(VDIFile* vdi, uint8_t* buffer, uint32_t blockNumber);
+
 #endif //EXT2_CHECKER_LOAD_FILE_H

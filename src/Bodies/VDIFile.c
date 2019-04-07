@@ -98,4 +98,10 @@ void vdiClose(VDIFile* vdi)
     free(vdi);
 }
 
+void fetchBlock(VDIFile* vdi, uint8_t* buffer, uint32_t blockNumber)
+{
+    vdiSeek(vdi,  blockNumber*vdi->superPage->pageSize, VDI_SET);
+    vdiRead(vdi, buffer, vdi->superPage->pageSize);
+}
+
 

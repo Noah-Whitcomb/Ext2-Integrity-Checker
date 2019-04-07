@@ -80,7 +80,7 @@ typedef struct
     uint16_t groupid;
 
     uint32_t numpagegroups;
-    // left shift 1024 buy log2PageSize to get page size
+    // left shift 1024 by log2PageSize to get page size
     uint32_t pageSize;
 
 } SuperPage;
@@ -98,6 +98,44 @@ typedef struct
     //TODO: refactor all block shit to page if it matters
 
 }BlockGroupDescriptor;
+
+typedef struct
+{
+    uint16_t typePermissions;
+    uint16_t userId;
+    uint32_t lower32BitsSize;
+    uint32_t lastAccessTime;
+    uint32_t creationTime;
+    uint32_t lastModificationTime;
+    uint32_t deletionTime;
+    uint16_t groupId;
+    uint16_t hardLinkCount;
+    uint32_t diskSectorCount;
+    uint32_t flags;
+    uint32_t opSystemValue1;
+    uint32_t directPointer0;
+    uint32_t directPointer1;
+    uint32_t directPointer2;
+    uint32_t directPointer3;
+    uint32_t directPointer4;
+    uint32_t directPointer5;
+    uint32_t directPointer6;
+    uint32_t directPointer7;
+    uint32_t directPointer8;
+    uint32_t directPointer9;
+    uint32_t directPointer10;
+    uint32_t directPointer11;
+    uint32_t singlyIndirectBlockPointer;
+    uint32_t doublyIndirectBlockPointer;
+    uint32_t triplyIndirectBlockPointer;
+    uint32_t generationNumber;
+    // for ext2 version 0, reserved field, for ext2 version >= 1, extended attribute block
+    uint32_t reservedField;
+    // for ext2 version 0, reserved field, for ext2 version >= 1, upper 32 bits of file size
+    uint32_t reservedField2;
+    uint32_t fragmentBlockAddress;
+    uint8_t opSysValue2[12];
+}Inode;
 
 typedef struct
 {
