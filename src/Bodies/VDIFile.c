@@ -6,7 +6,7 @@ VDIFile* vdiOpen(char* filename){
     VDIFile * vdi = (VDIFile*)malloc(sizeof (VDIFile));
     vdi->header = (Header*)malloc(sizeof (Header));
     vdi->header->diskGeometry = (DiskGeometry*)malloc( sizeof(DiskGeometry));
-    vdi->superPage = (SuperPage*)malloc(sizeof(SuperPage));
+    vdi->superBlock = (SuperBlock*)malloc(sizeof(SuperBlock));
     vdi->blockGroupDescriptorTable = NULL;
 
     printf("%s\n",filename);
@@ -27,11 +27,6 @@ VDIFile* vdiOpen(char* filename){
     fseek(vdi->f, 0x154, SEEK_SET);
     fread(&vdi->header->offsetPages, 4, 1, vdi->f);
     fread(&vdi->header->offsetData, 4, 1, vdi->f);
-
-    //TODO make sure this is good (ask kramer sometime)
-    // make sure offset data accounts for header boundary (1 MB or 0x100000)
-    vdi->header->offsetData += 0x100000;
-
     fread(&vdi->header->diskGeometry->cylinders, 4, 1, vdi->f);
     fread(&vdi->header->diskGeometry->heads, 4, 1, vdi->f);
     fread(&vdi->header->diskGeometry->sectors, 4, 1, vdi->f);
@@ -47,6 +42,12 @@ VDIFile* vdiOpen(char* filename){
     fread(vdi->header->UUIDLink, 1, 16, vdi->f);
     fread(vdi->header->UUIDParent, 1, 16, vdi->f);
     fread(vdi->header->shit, 1, 56, vdi->f);
+
+    fseek(vdi->f, vdi->header->offsetData + 454, SEEK_SET);
+    uint32_t volumeStart;
+    fread(&volumeStart, 4, 1, vdi->f);
+    volumeStart = volumeStart*512;
+    vdi->header->offsetData += volumeStart;
 
     return vdi;
 }
@@ -84,7 +85,7 @@ void vdiClose(VDIFile* vdi)
 {
     if(vdi->blockGroupDescriptorTable != NULL)
     {
-        for (size_t i = 0; i < vdi->superPage->numpagegroups; i++)
+        for (size_t i = 0; i < vdi->superBlock->numBlockGroups; i++)
         {
             free(vdi->blockGroupDescriptorTable[i]);
         }
@@ -93,15 +94,15 @@ void vdiClose(VDIFile* vdi)
 
     free(vdi->header->diskGeometry);
     free(vdi->header);
-    free(vdi->superPage);
+    free(vdi->superBlock);
     fclose(vdi->f);
     free(vdi);
 }
 
 void fetchBlock(VDIFile* vdi, uint8_t* buffer, uint32_t blockNumber)
 {
-    vdiSeek(vdi,  blockNumber*vdi->superPage->pageSize, VDI_SET);
-    vdiRead(vdi, buffer, vdi->superPage->pageSize);
+    vdiSeek(vdi,  blockNumber*vdi->superBlock->blockSize, VDI_SET);
+    vdiRead(vdi, buffer, vdi->superBlock->blockSize);
 }
 
 

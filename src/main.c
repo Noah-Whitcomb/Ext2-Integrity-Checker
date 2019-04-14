@@ -25,31 +25,39 @@ int main(int argc, char** argv) {
     readSuperBlock(vdi, superBlock);
 
     // check magic of ext2 filesystem
-    if (vdi->superPage->magic != 0xef53)
+    if (vdi->superBlock->magic != 0xef53)
     {
-        printBytes((uint8_t*)&vdi->superPage->magic, 2, "Magic");
+        printBytes((uint8_t*)&vdi->superBlock->magic, 2, "Magic");
         printf("fuck, you suck at programming and life. The magic isn't right. \n holy fuck you should have gotten this already");
         vdiClose(vdi);
         return 1;
     }
 
-    printf("ext2 page size: %d\n",vdi->superPage->pageSize);
+    printf("ext2 page size: %d\n",vdi->superBlock->blockSize);
 
     //TODO: ask kramer about where block group descriptor table is depending on block size
 
     //get block descriptor table
-    uint8_t blockDescTable [vdi->superPage->pageSize];
+    uint8_t blockDescTable [vdi->superBlock->blockSize];
     fetchBlock(vdi, blockDescTable, 2);
     readBlockDescTable(vdi, blockDescTable);
 
-    for(size_t i = 0;i<vdi->superPage->numpagegroups;i++)
+    for(size_t i = 0;i<vdi->superBlock->numBlockGroups;i++)
     {
         printf("inode table address of block group %d: %d\n", i, vdi->blockGroupDescriptorTable[i]->inodeTableAddress);
     }
+    
+//    uint8_t iNodeBuffer[128];
+//    for(size_t i = 1;i<999; i++)
+//    {
+//        printf("#######\nInode %d\n", i);
+//        fetchInode(vdi, iNodeBuffer, i);
+//    }
 
-
-    uint8_t iNodeBuffer[128];
-    fetchInode(vdi, iNodeBuffer, 2);
+    Inode* inode = fetchInode(vdi, 12);
+    uint8_t blockBuf[1024];
+    fetchBlockFromFile(vdi, inode, 798, blockBuf);
+    printBytes(blockBuf, 1024, "indoe shit");
 
     vdiClose(vdi);
     return 0;

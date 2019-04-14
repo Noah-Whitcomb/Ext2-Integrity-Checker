@@ -37,23 +37,23 @@ void printHeader(Header* head)
 uint32_t getNumBlockGroups(const VDIFile* vdi)
 {
     uint32_t numpagegroups1;
-    if(vdi->superPage->totalpages%vdi->superPage->pagespergroup == 0)
+    if(vdi->superBlock->totalBlocks%vdi->superBlock->blocksPerGroup == 0)
     {
-        numpagegroups1 = vdi->superPage->totalpages/vdi->superPage->pagespergroup;
+        numpagegroups1 = vdi->superBlock->totalBlocks/vdi->superBlock->blocksPerGroup;
     }
     else
     {
-        numpagegroups1 =  vdi->superPage->totalpages/vdi->superPage->pagespergroup + 1;
+        numpagegroups1 =  vdi->superBlock->totalBlocks/vdi->superBlock->blocksPerGroup + 1;
     }
 
     int numpagegroups2;
-    if(vdi->superPage->totalinodes%vdi->superPage->inodespergroup == 0)
+    if(vdi->superBlock->totalInodes%vdi->superBlock->inodesPerGroup == 0)
     {
-        numpagegroups2 = vdi->superPage->totalinodes/vdi->superPage->inodespergroup;
+        numpagegroups2 = vdi->superBlock->totalInodes/vdi->superBlock->inodesPerGroup;
     }
     else
     {
-        numpagegroups2 =  vdi->superPage->totalinodes/vdi->superPage->inodespergroup + 1;
+        numpagegroups2 =  vdi->superBlock->totalInodes/vdi->superBlock->inodesPerGroup + 1;
     }
 
     if(numpagegroups1 == numpagegroups2)
