@@ -19,9 +19,9 @@ int main(int argc, char** argv) {
     }
 
     //get superBlock, 1024 is superblock size always
-    uint8_t superBlock [0x400];
+    uint8_t superBlock [SUPERBLOCK_SIZE];
     vdiSeek(vdi, 0x400, VDI_SET);
-    vdiRead(vdi, superBlock, 0x400);
+    vdiRead(vdi, superBlock, SUPERBLOCK_SIZE);
     readSuperBlock(vdi, superBlock);
 
     // check magic of ext2 filesystem

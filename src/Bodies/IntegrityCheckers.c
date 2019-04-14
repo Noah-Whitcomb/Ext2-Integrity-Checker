@@ -2,6 +2,7 @@
 
 void readSuperBlock(VDIFile* vdi, uint8_t* superblock)
 {
+    memcpy(vdi->superBlock->fullArray, superblock, SUPERBLOCK_SIZE);
     memcpy(&vdi->superBlock->totalInodes, superblock, 4);
     memcpy(&vdi->superBlock->totalBlocks, superblock+4, 4);
     memcpy(&vdi->superBlock->superUserBlocks, superblock+8, 4);

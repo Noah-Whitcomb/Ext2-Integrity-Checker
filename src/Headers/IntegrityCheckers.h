@@ -4,6 +4,7 @@
 #include "VDIFile.h"
 
 #define BLOCK_DESCRIPTOR_SIZE 32
+#define SUPERBLOCK_SIZE 84
 
 void readSuperBlock(VDIFile* vdi, uint8_t* superblock);
 void readBlockDescTable(VDIFile* vdi, uint8_t* blockDescTable);

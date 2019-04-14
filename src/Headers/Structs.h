@@ -83,6 +83,8 @@ typedef struct
     // left shift 1024 by log2PageSize to get page size
     uint32_t blockSize;
 
+    uint8_t fullArray[1024];
+
 } SuperBlock;
 
 typedef struct
@@ -94,8 +96,6 @@ typedef struct
     uint16_t numUnallocatediNodes;
     uint16_t numDirectories;
     // some unused bytes here
-
-    //TODO: refactor all block shit to page if it matters
 
 }BlockGroupDescriptor;
 
