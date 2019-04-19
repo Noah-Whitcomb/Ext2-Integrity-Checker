@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-typedef struct
+typedef struct DiskGeometry
 {
     uint32_t cylinders;
     uint32_t heads;
@@ -87,7 +87,7 @@ typedef struct
 
 } SuperBlock;
 
-typedef struct
+typedef struct //BlockGroupDescriptor
 {
     uint32_t blockUsageBitmap;
     uint32_t inodeUsageBitmap;
@@ -127,18 +127,20 @@ typedef struct
 {
     Inode* inode;
     long long cursor;
-    uint8_t* traversal;
+    uint8_t* contents;
     //opendirectory(inode* inode, )
     // malloc array big enough to hold directory
     // read in stuff
     //rewindDirectory()
-    // set cursor to 0
+    // set cursor to 0 or 24 to skip . and .. directories
     //getNextEntry()
     // return true if there is a next entry, false otherwise
     // uses cursor to go into array thats been read in, get next directory entry (inode and name)
     //   then move cursor to next record
     //   if cursor = filesize return false
     //   else return true
+    //
+
     //
 } Directory;
 

@@ -2,7 +2,7 @@
 #include "Headers/VDIFile.h"
 #include "Headers/Structs.h"
 #include "Headers/Util.h"
-#include "Headers/IntegrityCheckers.h"
+#include "Headers/FileSystem.h"
 
 #define PATH "C:\\vdifiles\\VDITestFiles\\Good\\Test-fixed-1k.vdi"
 #define PATH_U "C:\\Users\\crisc\\VirtualBox VMs\\Ubuntu\\Ubuntu.vdi"
@@ -33,9 +33,6 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    printf("ext2 page size: %d\n",vdi->superBlock->blockSize);
-
-    //TODO: ask kramer about where block group descriptor table is depending on block size
 
     //get block descriptor table
     uint8_t blockDescTable [vdi->superBlock->blockSize];
@@ -54,10 +51,8 @@ int main(int argc, char** argv) {
 //        fetchInode(vdi, iNodeBuffer, i);
 //    }
 
-    Inode* inode = fetchInode(vdi, 12);
-    uint8_t blockBuf[1024];
-    fetchBlockFromFile(vdi, inode, 798, blockBuf);
-    printBytes(blockBuf, 1024, "indoe shit");
+    Inode* inode = fetchInode(vdi, 2);
+    openDirectory(vdi, inode);
 
     vdiClose(vdi);
     return 0;
