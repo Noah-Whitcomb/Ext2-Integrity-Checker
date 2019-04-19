@@ -51,6 +51,8 @@ int main(int argc, char** argv) {
 //        fetchInode(vdi, iNodeBuffer, i);
 //    }
 
+    //Inode* lost = fetchInode(vdi, 11);
+
     Inode* inode = fetchInode(vdi, 2);
     openDirectory(vdi, inode);
 

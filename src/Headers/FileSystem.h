@@ -16,7 +16,7 @@ void fetchSingle(VDIFile* vdi, Inode* inode, int blockNum, uint8_t* blockBuf, si
 void fetchDouble(VDIFile* vdi, Inode* inode, int blockNum, uint8_t* blockBuf, size_t ipb, int start);
 void fetchTriple(VDIFile* vdi, Inode* inode, int blockNum, uint8_t* blockBuf, size_t ipb);
 void openDirectory(VDIFile *vdi, Inode *inode);
-uint32_t getNextEntry(VDIFile *vdi, Directory *dir, uint32_t maxSize);
+uint32_t getNextEntry(VDIFile *vdi, Directory *dir);
 void rewindDirectory(Directory* dir, uint32_t location);
 
 #endif //EXT2_CHECKER_INTEGRITYCHECKERS_H

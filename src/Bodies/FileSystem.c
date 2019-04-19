@@ -103,7 +103,10 @@ Inode* fetchInode(VDIFile* vdi, uint32_t iNodeNumber)
 
     memcpy(iNodeBuffer, buf+(index)*iNodeSize,iNodeSize);
 
-    printBytes(buf, 128, iNodeNumber);
+//    char snum[5];
+//// convert 123 to string [buf]
+//    itoa(iNodeNumber, snum, 10);
+//    printBytes(iNodeBuffer, 128, snum);
 
 
     memcpy(&inode->typePermissions, iNodeBuffer, 2);
@@ -205,8 +208,11 @@ void fetchTriple(VDIFile* vdi, Inode* inode, int blockNum, uint8_t* blockBuf, si
 
 void openDirectory(VDIFile *vdi, Inode *inode)
 {
+    if((inode->typePermissions & 0xF000u) != 0x4000u) return;
     Directory *directory = (Directory *) malloc(sizeof(Directory));
     directory->contents = (uint8_t *) malloc(inode->lower32BitsSize);
+
+    directory->inode = inode;
 
     rewindDirectory(directory, REWIND_NO_DOTS);
 
@@ -215,7 +221,7 @@ void openDirectory(VDIFile *vdi, Inode *inode)
         fetchBlockFromInode(vdi, inode, i, directory->contents + i*vdi->superBlock->blockSize);
     }
 
-    while(getNextEntry(vdi, directory, inode->lower32BitsSize));
+    while(getNextEntry(vdi, directory));
 
     //printBytes(directory->contents, inode->lower32BitsSize, "bytes from root inode");
     free(directory->contents);
@@ -223,31 +229,38 @@ void openDirectory(VDIFile *vdi, Inode *inode)
 
 }
 
-uint32_t getNextEntry(VDIFile *vdi, Directory *dir, uint32_t maxSize)
+uint32_t getNextEntry(VDIFile *vdi, Directory *dir)
 {
     uint32_t inode = 0;
     uint32_t entrySize = 0;
     uint32_t nameLength = 0;
     uint32_t type = 0;
     uint8_t* name;
+
     memcpy(&inode, dir->contents + dir->cursor, 4);
     memcpy(&entrySize, dir->contents + dir->cursor + 4, 2);
+
+    if(entrySize == 0) return 0;
+
     memcpy(&nameLength, dir->contents + dir->cursor + 6, 1);
     memcpy(&type, dir->contents + dir->cursor + 7, 1);
+
     name = (uint8_t*)malloc(nameLength+1);
     memcpy(name, dir->contents + dir->cursor + 8, nameLength);
     name[nameLength] = 0;
+
     dir->cursor += entrySize;
+
     if(type == 2)
     {
         printf("directory name: %s at inode: %d\n recursing...\n", name, inode);
-        free(name);
         Inode* newInode = fetchInode(vdi, inode);
         openDirectory(vdi, newInode);
         free(newInode);
-        return inode;
+        printf("################\nfinished traversing [%s]\n", name);
+        free(name);
     }
-    return dir->cursor < maxSize;
+    return dir->cursor < dir->inode->lower32BitsSize;
 
 }
 
@@ -255,16 +268,3 @@ void rewindDirectory(Directory* dir, uint32_t location)
 {
     dir->cursor = location;
 }
-
-//opendirectory(inode* inode, )
-// malloc array big enough to hold directory
-// read in stuff
-//rewindDirectory()
-// set cursor to 0 or 24 to skip . and .. directories
-//getNextEntry()
-// return true if there is a next entry, false otherwise
-// uses cursor to go into array thats been read in, get next directory entry (inode and name)
-//   then move cursor to next record
-//   if cursor = filesize return false
-//   else return true
-//
