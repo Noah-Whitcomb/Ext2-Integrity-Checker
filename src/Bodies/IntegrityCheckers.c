@@ -2,38 +2,24 @@
 
 void makeBitmaps(VDIFile* vdi)
 {
-    Inode* inode = fetchInode(vdi, 2);
-    Directory* dir = openDirectory(vdi, inode);
+    Directory* dir = openDirectory(vdi, 2);
 
-    traverseAndMark(vdi, dir);
+    traverseAndMark(vdi, dir, "root", 2);
 
     closeDirectory(dir);
 }
 
-void traverseAndMark(VDIFile* vdi, Directory* dir)
+void traverseAndMark(VDIFile* vdi, Directory* dir, char* name, uint32_t iNodeNumber)
 {
-    uint32_t currentInode;
+    printf("##############\nTraversing %s at inode %d\n", name, iNodeNumber);
     while(getNextEntry(vdi, dir))
     {
-        Inode* newInode = fetchInode(vdi, dir->inodeNumber);
-        Directory* new_dir = openDirectory(vdi, newInode);
+        Directory* new_dir = openDirectory(vdi, dir->inodeNumber);
         if(new_dir != NULL)
         {
-            printf("directory name: %s at inode: %d\n recursing...\n", new_dir->name, new_dir->inodeNumber);
-            //traverseAndMark(vdi, new_dir);
-            printf("################\nfinished traversing [%s]\n", new_dir->name);
-            closeDirectory(new_dir);
+            traverseAndMark(vdi, new_dir, dir->name, dir->inodeNumber);
         }
-        //printf("Current inode: %d\n", dir->inodeNumber);
     }
-    //    if(type == 2)
-//    {
-//        printf("directory name: %s at inode: %d\n recursing...\n", name, inode);
-//        Inode* newInode = fetchInode(vdi, inode);
-//        openDirectory(vdi, newInode);
-//        free(newInode);
-//        printf("################\nfinished traversing [%s]\n", name);
-//        free(name);
-//    }
-//    return dir->cursor < dir->inode->lower32BitsSize;
+    printf("finished traversing [%s]\n", name);
+    closeDirectory(dir);
 }

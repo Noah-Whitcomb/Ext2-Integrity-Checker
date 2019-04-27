@@ -38,32 +38,7 @@ void readSuperBlock(VDIFile* vdi, uint8_t* superblock)
 
     vdi->superBlock->blockSize = 1024u << vdi->superBlock->log2BlockSize;
 
-    //TODO: if majorPortion >= 1, read in extended vdi shit (ask kramer)
-//    fread((void*)&vdi->superBlock->totalInodes, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->totalBlocks, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->superUserBlocks, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->unallocatedBlocks, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->unallocatedInodes, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->superBlockNumber, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->log2BlockSize, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->log2FragmentSize, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->blocksPerGroup, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->fragmentsPerGroup, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->inodesPerGroup, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->lastMountTime, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->lastWriteTime, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->timesMounted, 2, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->mountsAllowed, 2, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->magic, 2, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->systemState, 2, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->errorHandler, 2, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->minorVersion, 2, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->lastCheck, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->interval, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->opSysId, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->majorPortion, 4, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->userId, 2, 1, vdi->f);
-//    fread((void*)&vdi->superBlock->groupId, 2, 1, vdi->f);
+    //TODO: if majorPortion >= 1, read in extended vdi notNeeded (ask kramer)
 }
 
 void readBlockDescTable(VDIFile* vdi, uint8_t* blockDescTable)
@@ -206,12 +181,14 @@ void fetchTriple(VDIFile* vdi, Inode* inode, int blockNum, uint8_t* blockBuf, si
     fetchDouble(vdi, inode, realBlock, blockBuf, ipb, 0);
 }
 
-Directory* openDirectory(VDIFile *vdi, Inode* inode)
+Directory* openDirectory(VDIFile *vdi, uint32_t inodeNumber)
 {
+    Inode* inode = fetchInode(vdi, inodeNumber);
     if((inode->typePermissions & 0xF000u) != 0x4000u) return NULL;
     Directory *directory = (Directory *) malloc(sizeof(Directory));
     directory->contents = (uint8_t *) malloc(inode->lower32BitsSize);
 
+    directory->inodeNumber = inodeNumber;
     directory->inode = inode;
 
     rewindDirectory(directory, REWIND_NO_DOTS);
@@ -222,17 +199,11 @@ Directory* openDirectory(VDIFile *vdi, Inode* inode)
     }
 
     return directory;
-
-    //while(getNextEntry(vdi, directory));
-
-    //printBytes(directory->contents, inode->lower32BitsSize, "bytes from root inode");
-//    free(directory->contents);
-//    free(directory);
-
 }
 
-uint32_t getNextEntry(VDIFile *vdi, Directory *dir)
+uint32_t getNextEntry(VDIFile *vdi, Directory* dir)
 {
+    if(dir->cursor >= dir->inode->lower32BitsSize) return 0;
     uint32_t inode = 0;
     uint32_t entrySize = 0;
     uint32_t nameLength = 0;
@@ -256,7 +227,7 @@ uint32_t getNextEntry(VDIFile *vdi, Directory *dir)
     dir->name = name;
     dir->inodeNumber = inode;
 
-    return inode;
+    return 1;
 
 }
 

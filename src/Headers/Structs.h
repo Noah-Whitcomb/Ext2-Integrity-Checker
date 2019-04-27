@@ -34,7 +34,7 @@ typedef struct
     uint8_t UUIDLastSnap[16];
     uint8_t UUIDLink[16];
     uint8_t UUIDParent[16];
-    uint8_t shit[56];
+    uint8_t notNeeded[56];
 
 } Header;
 

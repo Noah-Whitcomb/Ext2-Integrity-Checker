@@ -15,7 +15,7 @@ void fetchBlockFromInode(VDIFile *vdi, Inode *inode, int blockNum, uint8_t *bloc
 void fetchSingle(VDIFile* vdi, Inode* inode, int blockNum, uint8_t* blockBuf, size_t ipb, int start);
 void fetchDouble(VDIFile* vdi, Inode* inode, int blockNum, uint8_t* blockBuf, size_t ipb, int start);
 void fetchTriple(VDIFile* vdi, Inode* inode, int blockNum, uint8_t* blockBuf, size_t ipb);
-Directory* openDirectory(VDIFile *vdi, Inode* inode);
+Directory* openDirectory(VDIFile *vdi, uint32_t inodeNumber);
 uint32_t getNextEntry(VDIFile *vdi, Directory *dir);
 void rewindDirectory(Directory* dir, uint32_t location);
 void closeDirectory(Directory* dir);

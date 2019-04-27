@@ -41,7 +41,7 @@ VDIFile* vdiOpen(char* filename){
     fread(vdi->header->UUIDLastSnap, 1, 16, vdi->f);
     fread(vdi->header->UUIDLink, 1, 16, vdi->f);
     fread(vdi->header->UUIDParent, 1, 16, vdi->f);
-    fread(vdi->header->shit, 1, 56, vdi->f);
+    fread(vdi->header->notNeeded, 1, 56, vdi->f);
 
     fseek(vdi->f, vdi->header->offsetData + 454, SEEK_SET);
     uint32_t volumeStart;
