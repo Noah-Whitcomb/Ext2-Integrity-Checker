@@ -221,11 +221,11 @@ void openDirectory(VDIFile *vdi, Inode *inode)
         fetchBlockFromInode(vdi, inode, i, directory->contents + i*vdi->superBlock->blockSize);
     }
 
-    while(getNextEntry(vdi, directory));
+    //while(getNextEntry(vdi, directory));
 
     //printBytes(directory->contents, inode->lower32BitsSize, "bytes from root inode");
-    free(directory->contents);
-    free(directory);
+//    free(directory->contents);
+//    free(directory);
 
 }
 
@@ -239,9 +239,6 @@ uint32_t getNextEntry(VDIFile *vdi, Directory *dir)
 
     memcpy(&inode, dir->contents + dir->cursor, 4);
     memcpy(&entrySize, dir->contents + dir->cursor + 4, 2);
-
-    if(entrySize == 0) return 0;
-
     memcpy(&nameLength, dir->contents + dir->cursor + 6, 1);
     memcpy(&type, dir->contents + dir->cursor + 7, 1);
 
@@ -251,16 +248,7 @@ uint32_t getNextEntry(VDIFile *vdi, Directory *dir)
 
     dir->cursor += entrySize;
 
-    if(type == 2)
-    {
-        printf("directory name: %s at inode: %d\n recursing...\n", name, inode);
-        Inode* newInode = fetchInode(vdi, inode);
-        openDirectory(vdi, newInode);
-        free(newInode);
-        printf("################\nfinished traversing [%s]\n", name);
-        free(name);
-    }
-    return dir->cursor < dir->inode->lower32BitsSize;
+     return inode != 0;
 
 }
 
