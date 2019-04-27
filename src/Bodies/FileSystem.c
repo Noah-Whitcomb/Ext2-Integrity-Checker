@@ -206,9 +206,9 @@ void fetchTriple(VDIFile* vdi, Inode* inode, int blockNum, uint8_t* blockBuf, si
     fetchDouble(vdi, inode, realBlock, blockBuf, ipb, 0);
 }
 
-void openDirectory(VDIFile *vdi, Inode *inode)
+Directory* openDirectory(VDIFile *vdi, Inode* inode)
 {
-    if((inode->typePermissions & 0xF000u) != 0x4000u) return;
+    if((inode->typePermissions & 0xF000u) != 0x4000u) return NULL;
     Directory *directory = (Directory *) malloc(sizeof(Directory));
     directory->contents = (uint8_t *) malloc(inode->lower32BitsSize);
 
@@ -220,6 +220,8 @@ void openDirectory(VDIFile *vdi, Inode *inode)
     {
         fetchBlockFromInode(vdi, inode, i, directory->contents + i*vdi->superBlock->blockSize);
     }
+
+    return directory;
 
     //while(getNextEntry(vdi, directory));
 
@@ -235,24 +237,38 @@ uint32_t getNextEntry(VDIFile *vdi, Directory *dir)
     uint32_t entrySize = 0;
     uint32_t nameLength = 0;
     uint32_t type = 0;
-    uint8_t* name;
+    char* name;
 
     memcpy(&inode, dir->contents + dir->cursor, 4);
+
+    if(inode == 0) return 0;
+
     memcpy(&entrySize, dir->contents + dir->cursor + 4, 2);
     memcpy(&nameLength, dir->contents + dir->cursor + 6, 1);
     memcpy(&type, dir->contents + dir->cursor + 7, 1);
 
-    name = (uint8_t*)malloc(nameLength+1);
+    name = (char*)malloc(nameLength+1);
     memcpy(name, dir->contents + dir->cursor + 8, nameLength);
     name[nameLength] = 0;
 
     dir->cursor += entrySize;
 
-     return inode != 0;
+    dir->name = name;
+    dir->inodeNumber = inode;
+
+    return inode;
 
 }
 
 void rewindDirectory(Directory* dir, uint32_t location)
 {
     dir->cursor = location;
+}
+
+void closeDirectory(Directory* dir)
+{
+    free(dir->inode);
+    free(dir->name);
+    free(dir->contents);
+    free(dir);
 }

@@ -1,7 +1,3 @@
-//
-// Created by crisc on 1/27/2019.
-//
-
 #ifndef EXT2_CHECKER_LOAD_FILE_H
 #define EXT2_CHECKER_LOAD_FILE_H
 

@@ -3,6 +3,7 @@
 #include "Headers/Structs.h"
 #include "Headers/Util.h"
 #include "Headers/FileSystem.h"
+#include "Headers/IntegrityCheckers.h"
 
 #define PATH "C:\\vdifiles\\VDITestFiles\\Good\\Test-fixed-1k.vdi"
 #define PATH_U "C:\\Users\\crisc\\VirtualBox VMs\\Ubuntu\\Ubuntu.vdi"
@@ -53,8 +54,7 @@ int main(int argc, char** argv) {
 
     //Inode* lost = fetchInode(vdi, 11);
 
-    Inode* inode = fetchInode(vdi, 2);
-    openDirectory(vdi, inode);
+    makeBitmaps(vdi);
 
     vdiClose(vdi);
     return 0;
