@@ -62,8 +62,8 @@ int bitmapsCmp(VDIFile* vdi, Bitmaps* bitmaps)
     {
         uint8_t freeInodeBitmap[1024];
         fetchBlock(vdi, freeInodeBitmap, vdi->blockGroupDescriptorTable[i]->inodeUsageBitmap);
-       // printBytes(freeInodeBitmap, 254, "original");
-        //printBytes(bitmaps->iNodeBitmaps[i], 254, "new");
+        printBytes(freeInodeBitmap, 254, "original");
+        printBytes(bitmaps->iNodeBitmaps[i], 254, "new");
         if(memcmp(freeInodeBitmap, bitmaps->iNodeBitmaps[i], vdi->superBlock->inodesPerGroup/8) != 0)
         {
             return 0;
