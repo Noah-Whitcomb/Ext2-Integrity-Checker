@@ -78,12 +78,6 @@ Inode* fetchInode(VDIFile* vdi, uint32_t iNodeNumber)
 
     memcpy(iNodeBuffer, buf+(index)*iNodeSize,iNodeSize);
 
-//    char snum[5];
-//// convert 123 to string [buf]
-//    itoa(iNodeNumber, snum, 10);
-//    printBytes(iNodeBuffer, 128, snum);
-
-
     memcpy(&inode->typePermissions, iNodeBuffer, 2);
     memcpy(&inode->userId, iNodeBuffer + 2, 2);
     memcpy(&inode->lower32BitsSize, iNodeBuffer + 4, 4);
