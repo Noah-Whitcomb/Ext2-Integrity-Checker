@@ -7,7 +7,11 @@ void makeBitmaps(VDIFile* vdi)
 
     Directory* dir = openDirectory(vdi, 2);
 
-    addInode(vdi, bitmaps, 2);
+    for(size_t i = 1; i<=10; i++)
+    {
+        addInode(vdi, bitmaps, i);
+    }
+
     traverseAndMark(vdi, dir, "root", 2, bitmaps);
 
     int result = bitmapsCmp(vdi, bitmaps);
@@ -47,35 +51,31 @@ void addInode(VDIFile* vdi, Bitmaps* bitmaps, uint32_t iNodeNumber)
     uint32_t byteIndex = blockGroupIndex/8;
     uint32_t bitIndex = blockGroupIndex%8;
 
-    printf("Inode number: %d, byte index: %d, bit index: %d\n", iNodeNumber, byteIndex, bitIndex);
-
-    //TODO change this if it doesnt work
     uint8_t temp = 1u << bitIndex;
-    bitmaps->iNodeBitmaps[blockGroup][byteIndex] = temp;
+    bitmaps->iNodeBitmaps[blockGroup][byteIndex] |= temp;
 
 }
 
 int bitmapsCmp(VDIFile* vdi, Bitmaps* bitmaps)
 {
-    int sum = 0;
     for(size_t i = 0; i<vdi->superBlock->numBlockGroups; i++)
     {
         uint8_t freeInodeBitmap[1024];
         fetchBlock(vdi, freeInodeBitmap, vdi->blockGroupDescriptorTable[i]->inodeUsageBitmap);
-       // printBytes(freeInodeBitmap, 1024, "original");
-        //printBytes(bitmaps->iNodeBitmaps[i], 1024, "new");
-        if(memcmp(freeInodeBitmap, bitmaps->iNodeBitmaps[i], vdi->superBlock->blockSize) != 0)
+       // printBytes(freeInodeBitmap, 254, "original");
+        //printBytes(bitmaps->iNodeBitmaps[i], 254, "new");
+        if(memcmp(freeInodeBitmap, bitmaps->iNodeBitmaps[i], vdi->superBlock->inodesPerGroup/8) != 0)
         {
-            sum++;
+            return 0;
         }
     }
     return 1;
 }
 
-//int bitsCmp(uint8_t original, uint8_t new)
-//{
-//    size_t
-//}
+int bitsCmp(uint8_t original, uint8_t new)
+{
+
+}
 
 void freeBitmaps(Bitmaps* bitmaps, VDIFile* vdi)
 {
