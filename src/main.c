@@ -40,10 +40,10 @@ int main(int argc, char** argv) {
     fetchBlock(vdi, blockDescTable, 2);
     readBlockDescTable(vdi, blockDescTable);
 
-    for(size_t i = 0;i<vdi->superBlock->numBlockGroups;i++)
-    {
-        printf("inode table address of block group %d: %d\n", i, vdi->blockGroupDescriptorTable[i]->inodeTableAddress);
-    }
+//    for(size_t i = 0;i<vdi->superBlock->numBlockGroups;i++)
+//    {
+//        printf("inode table address of block group %d: %d\n", i, vdi->blockGroupDescriptorTable[i]->inodeTableAddress);
+//    }
     
 //    uint8_t iNodeBuffer[128];
 //    for(size_t i = 1;i<999; i++)

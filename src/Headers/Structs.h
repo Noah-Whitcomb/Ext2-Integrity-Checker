@@ -148,6 +148,12 @@ typedef struct
 
 typedef struct
 {
+    uint8_t ** iNodeBitmaps;
+    uint8_t ** blockBitmaps;
+} Bitmaps;
+
+typedef struct
+{
     BlockGroupDescriptor ** blockGroupDescriptorTable;
     Header* header;
     int fileDescriptor;
