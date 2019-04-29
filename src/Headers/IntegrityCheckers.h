@@ -20,4 +20,6 @@ void markSingles(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber);
 void markDouble(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber);
 void markTriple(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber);
 
+//copies of superblock and block group descriptor table in block groups copies of 3, 5, 7
+
 #endif //EXT2_CHECKER_INTEGRITYCHECKERS_H

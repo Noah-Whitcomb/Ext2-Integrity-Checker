@@ -2,12 +2,11 @@
 
 void makeBitmaps(VDIFile* vdi)
 {
-    // createNode new free inode and block bitmaps, calloc sets all values to zero
     Bitmaps* bitmaps = initializeBitmaps(vdi);
 
     Directory* dir = openDirectory(vdi, 2);
 
-    //TODO ask kramer about reserved inodes
+    // take care of reserved inodes
     for(size_t i = 1; i<=10; i++)
     {
         addInode(vdi, bitmaps, i);
@@ -16,10 +15,21 @@ void makeBitmaps(VDIFile* vdi)
 
     traverseAndMark(vdi, dir, "root", 2, bitmaps);
 
+    for(size_t i = 0; i < vdi->superBlock->numBlockGroups; i++)
+    {
+        addBlock(vdi, bitmaps, vdi->blockGroupDescriptorTable[i]->blockUsageBitmap);
+        addBlock(vdi, bitmaps, vdi->blockGroupDescriptorTable[i]->inodeUsageBitmap);
+        for(size_t j = 0; j < (128*vdi->superBlock->inodesPerGroup)/vdi->superBlock->blockSize; j++)
+        {
+            addBlock(vdi, bitmaps, vdi->blockGroupDescriptorTable[i]->inodeTableAddress+j);
+        }
+        //addBlock(vdi, bitmaps, vdi->blockGroupDescriptorTable[i]->inodeTableAddress);
+    }
+
     struct node* reachable = NULL;
     struct node* notReachable = NULL;
 
-    int result = bitmapsCmp(vdi, bitmaps, NULL, NULL);
+    int result = bitmapsCmp(vdi, bitmaps, notReachable, reachable);
     if(result)
     {
         printf("All bitmaps are the same!\n");
@@ -90,7 +100,7 @@ void markSingles(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber)
 {
     uint8_t data[vdi->superBlock->blockSize];
     fetchBlock(vdi, data, blockNumber);
-    //uint32_t dataInts[vdi->superBlock->blockSize/4];
+
     for(size_t i = 0; i<vdi->superBlock->blockSize/4; i++)
     {
         uint32_t temp;
@@ -106,11 +116,11 @@ void markDouble(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber)
 {
     uint8_t data[vdi->superBlock->blockSize];
     fetchBlock(vdi, data, blockNumber);
-    //uint32_t dataInts[vdi->superBlock->blockSize/4];
+
     for(size_t i = 0; i<vdi->superBlock->blockSize/4; i++)
     {
         uint32_t temp;
-        memcpy(&temp, data +i*4, 4);
+        memcpy(&temp, data + i*4, 4);
         if(temp != 0)
         {
             addBlock(vdi, bitmaps, temp);
@@ -123,7 +133,7 @@ void markTriple(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber)
 {
     uint8_t data[vdi->superBlock->blockSize];
     fetchBlock(vdi, data, blockNumber);
-    //uint32_t dataInts[vdi->superBlock->blockSize/4];
+
     for(size_t i = 0; i<vdi->superBlock->blockSize/4; i++)
     {
         uint32_t temp;
@@ -149,7 +159,7 @@ void addBlock(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber)
 
 int bitmapsCmp(VDIFile *vdi, Bitmaps *bitmaps, struct node *notReachable, struct node *reachable)
 {
-    int count = 1;
+    int good = 1;
     for(size_t blockGroup = 0; blockGroup<vdi->superBlock->numBlockGroups; blockGroup++)
     {
         uint8_t freeInodeBitmap[1024];
@@ -157,21 +167,22 @@ int bitmapsCmp(VDIFile *vdi, Bitmaps *bitmaps, struct node *notReachable, struct
 
         uint8_t freeBlockBitmap[1024];
         fetchBlock(vdi, freeBlockBitmap, vdi->blockGroupDescriptorTable[blockGroup]->blockUsageBitmap);
+        printf("##################################\n");
         printBytes(freeBlockBitmap, vdi->superBlock->blocksPerGroup/8, "original");
         printBytes(bitmaps->blockBitmaps[blockGroup], vdi->superBlock->blocksPerGroup/8, "new");
         if(memcmp(freeBlockBitmap, bitmaps->blockBitmaps[blockGroup], vdi->superBlock->blocksPerGroup/8) != 0)
         {
-            count = 0;
+            good = 0;
         }
         for(uint32_t byteIndex = 0; byteIndex<vdi->superBlock->inodesPerGroup/8; byteIndex++)
         {
             if(bitsCmp(vdi, notReachable, reachable, freeInodeBitmap[byteIndex], bitmaps->iNodeBitmaps[blockGroup][byteIndex], byteIndex, blockGroup) == 0)
             {
-                count = 0;
+                good = 0;
             }
         }
     }
-    return count;
+    return good;
 }
 
 int bitsCmp(VDIFile* vdi, struct node* notReachable, struct node* reachable, uint8_t original, uint8_t new, uint32_t byteNum, uint32_t blockGroup)

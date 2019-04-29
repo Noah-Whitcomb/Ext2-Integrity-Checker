@@ -16,5 +16,6 @@ struct node
 struct node* createNode(uint32_t initialValue);
 void add(struct node* head, uint32_t nextNode);
 void traverse(struct node* head);
+//TODO add list free function
 
 #endif //EXT2_CHECKER_LINKEDLIST_H
