@@ -49,6 +49,9 @@ void readBlockDescTable(VDIFile* vdi, uint8_t* blockDescTable)
         vdi->blockGroupDescriptorTable[i] = (BlockGroupDescriptor*)malloc(sizeof(BlockGroupDescriptor));
     }
 
+    vdi->BlockGroupDescriptorFullContents = (uint8_t*)malloc(vdi->superBlock->blockSize);
+    memcpy(vdi->BlockGroupDescriptorFullContents, blockDescTable, vdi->superBlock->blockSize);
+
     for(size_t i = 0;i<vdi->superBlock->numBlockGroups;i++)
     {
         memcpy(&vdi->blockGroupDescriptorTable[i]->blockUsageBitmap, blockDescTable + i*BLOCK_DESCRIPTOR_SIZE, 4);

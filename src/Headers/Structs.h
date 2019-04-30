@@ -83,6 +83,7 @@ typedef struct
     // left shift 1024 by log2PageSize to get page size
     uint32_t blockSize;
 
+    //TODO change all 1024's to superblock->blocksize (so change this to uint8_t* and malloc)
     uint8_t fullArray[1024];
 
 } SuperBlock;
@@ -95,6 +96,7 @@ typedef struct //BlockGroupDescriptor
     uint16_t numUnallocatedBlocks;
     uint16_t numUnallocatediNodes;
     uint16_t numDirectories;
+
     // some unused bytes here
 
 }BlockGroupDescriptor;
@@ -155,6 +157,7 @@ typedef struct
 typedef struct
 {
     BlockGroupDescriptor ** blockGroupDescriptorTable;
+    uint8_t* BlockGroupDescriptorFullContents;
     Header* header;
     int fileDescriptor;
     FILE* f;

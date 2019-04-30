@@ -15,6 +15,7 @@ void makeBitmaps(VDIFile* vdi)
 
     traverseAndMark(vdi, dir, "root", 2, bitmaps);
 
+    // mark off blocks from block group descriptors
     for(size_t i = 0; i < vdi->superBlock->numBlockGroups; i++)
     {
         addBlock(vdi, bitmaps, vdi->blockGroupDescriptorTable[i]->blockUsageBitmap);
@@ -24,6 +25,36 @@ void makeBitmaps(VDIFile* vdi)
             addBlock(vdi, bitmaps, vdi->blockGroupDescriptorTable[i]->inodeTableAddress+j);
         }
         //addBlock(vdi, bitmaps, vdi->blockGroupDescriptorTable[i]->inodeTableAddress);
+    }
+
+    //check copies of superblock and block group descriptor tables
+    struct node* badSuperblocks = NULL;
+    struct node* badBlockGroupDescriptors = NULL;
+
+    for(uint32_t i = 1; i<vdi->superBlock->numBlockGroups; i++)
+    {
+        if(checkPowerOf(3, i) || checkPowerOf(5, i) || checkPowerOf(7, i))
+        {
+            for(size_t j = 0; j<3; j++)
+            {
+                addBlock(vdi, bitmaps, i*vdi->superBlock->blocksPerGroup + j);
+            }
+            uint8_t superBlockCopy[vdi->superBlock->blockSize];
+            uint8_t blockGroupDescriptorCopy[vdi->superBlock->blockSize];
+            fetchBlock(vdi, superBlockCopy, i*vdi->superBlock->blocksPerGroup+1);
+            fetchBlock(vdi, blockGroupDescriptorCopy, i*vdi->superBlock->blocksPerGroup + 2);
+            printBytes(vdi->superBlock->fullArray, 1024, "original bgdt");
+            printBytes(superBlockCopy, 1024, "copy");
+            if(memcmp(vdi->superBlock->fullArray, superBlockCopy, SUPERBLOCK_SIZE) != 0)
+            {
+                add(badSuperblocks, i);
+            }
+            if(memcmp(vdi->BlockGroupDescriptorFullContents, blockGroupDescriptorCopy, vdi->superBlock->blockSize) != 0)
+            {
+                add(badSuperblocks, i);
+            }
+
+        }
     }
 
     struct node* reachable = NULL;
@@ -75,6 +106,12 @@ void addInode(VDIFile* vdi, Bitmaps* bitmaps, uint32_t iNodeNumber)
 void addBlocksFromInode(VDIFile *vdi, Bitmaps *bitmaps, uint32_t iNodeNumber)
 {
     Inode* inode = fetchInode(vdi, iNodeNumber);
+
+    if(inode->fragmentBlockAddress != 0)
+    {
+        addBlock(vdi, bitmaps, inode->fragmentBlockAddress);
+    }
+
     for (size_t i = 0; i < 15; i++)
     {
         if(inode->pointers[i] != 0)
@@ -167,9 +204,9 @@ int bitmapsCmp(VDIFile *vdi, Bitmaps *bitmaps, struct node *notReachable, struct
 
         uint8_t freeBlockBitmap[1024];
         fetchBlock(vdi, freeBlockBitmap, vdi->blockGroupDescriptorTable[blockGroup]->blockUsageBitmap);
-        printf("##################################\n");
-        printBytes(freeBlockBitmap, vdi->superBlock->blocksPerGroup/8, "original");
-        printBytes(bitmaps->blockBitmaps[blockGroup], vdi->superBlock->blocksPerGroup/8, "new");
+//        printf("##################################\n");
+//        printBytes(freeBlockBitmap, vdi->superBlock->blocksPerGroup/8, "original");
+//        printBytes(bitmaps->blockBitmaps[blockGroup], vdi->superBlock->blocksPerGroup/8, "new");
         if(memcmp(freeBlockBitmap, bitmaps->blockBitmaps[blockGroup], vdi->superBlock->blocksPerGroup/8) != 0)
         {
             good = 0;

@@ -14,6 +14,29 @@ void printBytes(const uint8_t* buffer, size_t size, char* description)
     printf("\n");
 }
 
+int checkPowerOf(uint32_t power_of, uint32_t number)
+{
+    uint32_t count = 0;
+    while(count < number)
+    {
+        uint32_t temp = power(power_of, count);
+        if(number == temp) return 1;
+        if(temp > number) return 0;
+        count++;
+    }
+    return 0;
+}
+
+uint32_t power(uint32_t base, uint32_t power)
+{
+    uint32_t return_val = 1;
+    for(uint32_t i = 0; i<power; i++)
+    {
+        return_val = return_val*base;
+    }
+    return return_val;
+}
+
 void printHeader(Header* head)
 {
     printf("PRE HEADER - STRING\n%s\n", head->preHeader);

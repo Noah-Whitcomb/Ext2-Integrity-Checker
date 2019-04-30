@@ -4,7 +4,7 @@
 #include "VDIFile.h"
 
 #define BLOCK_DESCRIPTOR_SIZE 32
-#define SUPERBLOCK_SIZE 84
+#define SUPERBLOCK_SIZE 1024
 #define REWIND_NO_DOTS 24
 #define REWIND_DOTS 0
 

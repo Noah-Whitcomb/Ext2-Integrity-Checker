@@ -92,6 +92,7 @@ void vdiClose(VDIFile* vdi)
         free(vdi->blockGroupDescriptorTable);
     }
 
+    free(vdi->BlockGroupDescriptorFullContents);
     free(vdi->header->diskGeometry);
     free(vdi->header);
     free(vdi->superBlock);
