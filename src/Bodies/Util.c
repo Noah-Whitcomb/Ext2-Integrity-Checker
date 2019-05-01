@@ -17,7 +17,7 @@ void printBytes(const uint8_t* buffer, size_t size, char* description)
 int checkPowerOf(uint32_t power_of, uint32_t number)
 {
     uint32_t count = 0;
-    while(count < number)
+    while(1)
     {
         uint32_t temp = power(power_of, count);
         if(number == temp) return 1;

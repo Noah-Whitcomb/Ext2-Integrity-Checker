@@ -27,9 +27,15 @@ void makeBitmaps(VDIFile* vdi)
         //addBlock(vdi, bitmaps, vdi->blockGroupDescriptorTable[i]->inodeTableAddress);
     }
 
+    // mark off blocks 0, 1, 2 from block group 0
+    for(size_t j = 0; j<3; j++)
+    {
+        addBlock(vdi, bitmaps, j);
+    }
+
     //check copies of superblock and block group descriptor tables
-    struct node* badSuperblocks = NULL;
-    struct node* badBlockGroupDescriptors = NULL;
+    struct List* badSuperblocks = initializeList();
+    struct List* badBlockGroupDescriptors = initializeList();
 
     for(uint32_t i = 1; i<vdi->superBlock->numBlockGroups; i++)
     {
@@ -39,44 +45,76 @@ void makeBitmaps(VDIFile* vdi)
             {
                 addBlock(vdi, bitmaps, i*vdi->superBlock->blocksPerGroup + j);
             }
-            uint8_t superBlockCopy[vdi->superBlock->blockSize];
+            uint8_t superBlockCopy[SUPERBLOCK_SIZE];
             uint8_t blockGroupDescriptorCopy[vdi->superBlock->blockSize];
             fetchBlock(vdi, superBlockCopy, i*vdi->superBlock->blocksPerGroup+1);
             fetchBlock(vdi, blockGroupDescriptorCopy, i*vdi->superBlock->blocksPerGroup + 2);
-            printBytes(vdi->superBlock->fullArray, 1024, "original bgdt");
-            printBytes(superBlockCopy, 1024, "copy");
             if(memcmp(vdi->superBlock->fullArray, superBlockCopy, SUPERBLOCK_SIZE) != 0)
             {
-                add(badSuperblocks, i);
+                badSuperblocks->add(badSuperblocks, i);
             }
             if(memcmp(vdi->BlockGroupDescriptorFullContents, blockGroupDescriptorCopy, vdi->superBlock->blockSize) != 0)
             {
-                add(badSuperblocks, i);
+                badBlockGroupDescriptors->add(badSuperblocks, i);
             }
 
         }
     }
 
-    struct node* reachable = NULL;
-    struct node* notReachable = NULL;
+    struct List* inodesReachable = initializeList();
+    struct List* inodesNotReachable = initializeList();
+    struct List* blocksReachable = initializeList();
+    struct List* blocksNotReachable = initializeList();
 
-    int result = bitmapsCmp(vdi, bitmaps, notReachable, reachable);
+
+    int result = bitmapsCmp(vdi, bitmaps, inodesNotReachable, inodesReachable, blocksNotReachable, blocksReachable);
     if(result)
     {
         printf("All bitmaps are the same!\n");
     }
     else
     {
-        printf("You fuckin suck!\n");
+        printf("You suck!\n");
     }
+
+    struct List* temp = blocksNotReachable;
+    printf("Not reachable: \n");
+    int count = 0;
+    while(temp->head != NULL)
+    {
+        printf("Block group: %d\t", temp->head->value/vdi->superBlock->blocksPerGroup);
+        printf("Block number: %d\n", temp->head->value);
+//        uint8_t bl[1024];
+//        fetchBlock(vdi, bl, temp->head->value);
+//        printBytes(bl, 1024, "block");
+        temp->head = temp->head->nextNode;
+        count++;
+    }
+    printf("not reachable count: %d\n", count);
+    printf("\n#########\n");
+    struct List* temp2 = blocksReachable;
+    printf("Reachable:\n");
+    int count2 = 0;
+    while(temp2->head != NULL)
+    {
+        printf("Block group: %d\t", temp2->head->value/vdi->superBlock->blocksPerGroup);
+        printf("Block number: %d\n", temp2->head->value);
+        temp2->head = temp2->head->nextNode;
+        count2++;
+    }
+    printf("reachable count: %d\n", count2);
 
     closeDirectory(dir);
     freeBitmaps(bitmaps, vdi);
+    freeList(badBlockGroupDescriptors);
+    freeList(badSuperblocks);
+    freeList(inodesReachable);
+    freeList(inodesNotReachable);
 }
 
 void traverseAndMark(VDIFile *vdi, Directory *dir, char *name, uint32_t iNodeNumber, Bitmaps *bitmaps)
 {
-    //printf("##############\nTraversing %s at inode %d\n", name, iNodeNumber);
+    //printf("##############\nTraversing %s at inode %d\n", name, value);
     while(getNextEntry(vdi, dir))
     {
         addInode(vdi, bitmaps, dir->inodeNumber);
@@ -185,6 +223,11 @@ void markTriple(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber)
 
 void addBlock(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber)
 {
+    if(blockNumber == 561)
+    {
+        int n = 5;
+        printf("%d", n);
+    }
     uint32_t blockGroup = blockNumber/vdi->superBlock->blocksPerGroup;
     uint32_t blockGroupIndex = blockNumber%vdi->superBlock->blocksPerGroup;
     uint32_t byteIndex = blockGroupIndex/8;
@@ -194,54 +237,150 @@ void addBlock(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber)
     bitmaps->blockBitmaps[blockGroup][byteIndex] |= temp;
 }
 
-int bitmapsCmp(VDIFile *vdi, Bitmaps *bitmaps, struct node *notReachable, struct node *reachable)
+int bitmapsCmp(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachable, struct List *inodesReachable,
+               struct List *blocksNotReachable, struct List *blocksReachable)
 {
     int good = 1;
-    for(size_t blockGroup = 0; blockGroup<vdi->superBlock->numBlockGroups; blockGroup++)
+
+    // Handle all block groups except last one
+    for(size_t blockGroup = 0; blockGroup<vdi->superBlock->numBlockGroups-1; blockGroup++)
     {
         uint8_t freeInodeBitmap[1024];
         fetchBlock(vdi, freeInodeBitmap, vdi->blockGroupDescriptorTable[blockGroup]->inodeUsageBitmap);
 
         uint8_t freeBlockBitmap[1024];
         fetchBlock(vdi, freeBlockBitmap, vdi->blockGroupDescriptorTable[blockGroup]->blockUsageBitmap);
-//        printf("##################################\n");
-//        printBytes(freeBlockBitmap, vdi->superBlock->blocksPerGroup/8, "original");
-//        printBytes(bitmaps->blockBitmaps[blockGroup], vdi->superBlock->blocksPerGroup/8, "new");
-        if(memcmp(freeBlockBitmap, bitmaps->blockBitmaps[blockGroup], vdi->superBlock->blocksPerGroup/8) != 0)
+        printf("##################################\n");
+        printBytes(freeBlockBitmap, vdi->superBlock->blocksPerGroup/8, "original");
+        printBytes(bitmaps->blockBitmaps[blockGroup], vdi->superBlock->blocksPerGroup/8, "new");
+
+        for(uint32_t byteIndex = 0; byteIndex<vdi->superBlock->blocksPerGroup/8; byteIndex++)
         {
-            good = 0;
+            if(bitsCmpBlocks(vdi, blocksNotReachable, blocksReachable, freeBlockBitmap[byteIndex],
+                       bitmaps->blockBitmaps[blockGroup][byteIndex], byteIndex, blockGroup, 8) == 0)
+            {
+                good = 0;
+            }
         }
         for(uint32_t byteIndex = 0; byteIndex<vdi->superBlock->inodesPerGroup/8; byteIndex++)
         {
-            if(bitsCmp(vdi, notReachable, reachable, freeInodeBitmap[byteIndex], bitmaps->iNodeBitmaps[blockGroup][byteIndex], byteIndex, blockGroup) == 0)
+            if(bitsCmpInodes(vdi, inodesNotReachable, inodesReachable, freeInodeBitmap[byteIndex],
+                       bitmaps->iNodeBitmaps[blockGroup][byteIndex], byteIndex, blockGroup, 8) == 0)
             {
                 good = 0;
             }
         }
     }
+    // Handle last block group
+    uint8_t freeInodeBitmap[1024];
+    fetchBlock(vdi, freeInodeBitmap, vdi->blockGroupDescriptorTable[vdi->superBlock->numBlockGroups-1]->inodeUsageBitmap);
+
+    uint8_t freeBlockBitmap[1024];
+    fetchBlock(vdi, freeBlockBitmap, vdi->blockGroupDescriptorTable[vdi->superBlock->numBlockGroups-1]->blockUsageBitmap);
+
+    uint32_t numBlocks = vdi->superBlock->totalBlocks%vdi->superBlock->blocksPerGroup;
+    uint32_t numBytesBlocks = numBlocks/8;
+    uint32_t bitsInLastBlockByte = numBlocks%8;
+
+    if(bitsInLastBlockByte == 0) bitsInLastBlockByte = 8;
+    for(uint32_t byteIndex = 0; byteIndex<numBytesBlocks; byteIndex++)
+    {
+        if(byteIndex == numBytesBlocks-1)
+        {
+            if(bitsCmpBlocks(vdi, blocksNotReachable, blocksReachable, freeBlockBitmap[byteIndex],
+                       bitmaps->blockBitmaps[vdi->superBlock->numBlockGroups - 1][byteIndex], byteIndex,
+                       vdi->superBlock->numBlockGroups - 1, bitsInLastBlockByte) == 0)
+            {
+                good = 0;
+            }
+        }
+        else if(bitsCmpBlocks(vdi, blocksNotReachable, blocksReachable, freeBlockBitmap[byteIndex],
+                   bitmaps->blockBitmaps[vdi->superBlock->numBlockGroups - 1][byteIndex], byteIndex,
+                   vdi->superBlock->numBlockGroups - 1, 8) == 0)
+        {
+            good = 0;
+        }
+    }
+
+    uint32_t numInodes = vdi->superBlock->totalInodes%vdi->superBlock->inodesPerGroup;
+    uint32_t numBytesInodes = numInodes/8;
+    uint32_t bitsInLastInodeByte = numInodes%8;
+    for(uint32_t byteIndex = 0; byteIndex<numBytesInodes; byteIndex++)
+    {
+        if(byteIndex == numBytesInodes-1)
+        {
+            if(bitsCmpInodes(vdi, inodesNotReachable, inodesReachable, freeInodeBitmap[byteIndex],
+                       bitmaps->iNodeBitmaps[vdi->superBlock->numBlockGroups - 1][byteIndex], byteIndex,
+                       vdi->superBlock->numBlockGroups - 1, bitsInLastInodeByte) == 0)
+            {
+                good = 0;
+            }
+        }
+        else if (bitsCmpInodes(vdi, inodesNotReachable, inodesReachable, freeInodeBitmap[byteIndex],
+                        bitmaps->iNodeBitmaps[vdi->superBlock->numBlockGroups - 1][byteIndex], byteIndex,
+                        vdi->superBlock->numBlockGroups - 1, 8) == 0)
+            {
+                good = 0;
+            }
+    }
+
+
     return good;
 }
 
-int bitsCmp(VDIFile* vdi, struct node* notReachable, struct node* reachable, uint8_t original, uint8_t new, uint32_t byteNum, uint32_t blockGroup)
+int bitsCmpInodes(VDIFile *vdi, struct List *notReachable, struct List *reachable, uint8_t original, uint8_t new,
+            uint32_t byteNum, uint32_t blockGroup, uint32_t maxBits)
 {
     int count = 1;
     for(uint32_t i = 0; i<8; i++)
     {
-        uint32_t originalCurrentBit = (original >> i) & 1u;
-        uint32_t newCurrentBit = (new >> i) & 1u;
-        if((originalCurrentBit) == 0 &&  (newCurrentBit == 1))
+        if(i < maxBits)
         {
-            uint32_t blockGroupIndex = byteNum*8+i;
-            uint32_t iNodeNumber = blockGroup*vdi->superBlock->inodesPerGroup + blockGroupIndex + 1;
-            reachable->add(reachable, iNodeNumber);
-            count = 0;
+            uint32_t originalCurrentBit = (original >> i) & 1u;
+            uint32_t newCurrentBit = (new >> i) & 1u;
+            if ((originalCurrentBit == 0) && (newCurrentBit == 1))
+            {
+                uint32_t blockGroupIndex = byteNum * 8 + i;
+                uint32_t iNodeNumber = blockGroup * vdi->superBlock->inodesPerGroup + blockGroupIndex;
+                reachable->add(reachable, iNodeNumber);
+                count = 0;
+            }
+            if ((originalCurrentBit) == 1 && (newCurrentBit == 0))
+            {
+                uint32_t blockGroupIndex = byteNum * 8 + i;
+                uint32_t iNodeNumber = blockGroup * vdi->superBlock->inodesPerGroup + blockGroupIndex;
+                notReachable->add(notReachable, iNodeNumber);
+                count = 0;
+            }
         }
-        if((originalCurrentBit) == 1 &&  (newCurrentBit == 0))
+    }
+    return count;
+}
+
+int bitsCmpBlocks(VDIFile *vdi, struct List *notReachable, struct List *reachable, uint8_t original, uint8_t new,
+                  uint32_t byteNum, uint32_t blockGroup, uint32_t maxBits)
+{
+    int count = 1;
+    for(uint32_t i = 0; i<8; i++)
+    {
+        if(i < maxBits)
         {
-            uint32_t blockGroupIndex = byteNum*8+i;
-            uint32_t iNodeNumber = blockGroup*vdi->superBlock->inodesPerGroup + blockGroupIndex + 1;
-            notReachable->add(notReachable, iNodeNumber);
-            count = 0;
+            uint32_t originalCurrentBit = (original >> i) & 1u;
+            uint32_t newCurrentBit = (new >> i) & 1u;
+            if ((originalCurrentBit == 0) && (newCurrentBit == 1))
+            {
+                uint32_t blockGroupIndex = byteNum * 8 + i;
+                uint32_t blockNum = blockGroup * vdi->superBlock->blocksPerGroup + blockGroupIndex;
+                reachable->add(reachable, blockNum);
+                count = 0;
+            }
+            if ((originalCurrentBit) == 1 && (newCurrentBit == 0))
+            {
+                uint32_t blockGroupIndex = byteNum * 8 + i;
+                uint32_t blockNum = blockGroup * vdi->superBlock->blocksPerGroup + blockGroupIndex;
+                notReachable->add(notReachable, blockNum);
+                count = 0;
+            }
         }
     }
     return count;

@@ -11,8 +11,13 @@ void traverseAndMark(VDIFile *vdi, Directory *dir, char *name, uint32_t iNodeNum
 void freeBitmaps(Bitmaps* bitmaps, VDIFile* vdi);
 Bitmaps* initializeBitmaps(VDIFile* vdi);
 void addInode(VDIFile* vdi, Bitmaps* bitmaps, uint32_t iNodeNumber);
-int bitmapsCmp(VDIFile *vdi, Bitmaps *bitmaps, struct node *notReachable, struct node *reachable);
-int bitsCmp(VDIFile* vdi, struct node* notReachable, struct node* reachable, uint8_t original, uint8_t new, uint32_t byteNum, uint32_t blockGroup);
+int bitmapsCmp(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachable, struct List *inodesReachable,
+               struct List *blocksNotReachable, struct List *blocksReachable);
+int bitsCmpInodes(VDIFile *vdi, struct List *notReachable, struct List *reachable, uint8_t original, uint8_t new,
+            uint32_t byteNum, uint32_t blockGroup, uint32_t maxBits);
+int bitsCmpBlocks(VDIFile *vdi, struct List *notReachable, struct List *reachable, uint8_t original, uint8_t new,
+            uint32_t byteNum, uint32_t blockGroup, uint32_t maxBits);
+
 void addBlock(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber);
 void addBlocksFromInode(VDIFile *vdi, Bitmaps *bitmaps, uint32_t iNodeNumber);
 

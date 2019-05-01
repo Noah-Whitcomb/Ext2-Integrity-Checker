@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#define SUPERBLOCK_SIZE 1024
+
 typedef struct DiskGeometry
 {
     uint32_t cylinders;
@@ -15,7 +17,6 @@ typedef struct DiskGeometry
 typedef struct
 {
     //block = pages
-    // TODO: make sure all types are correct
     uint8_t preHeader[72];
     uint32_t headerSize;
     uint32_t imageType;
@@ -83,8 +84,7 @@ typedef struct
     // left shift 1024 by log2PageSize to get page size
     uint32_t blockSize;
 
-    //TODO change all 1024's to superblock->blocksize (so change this to uint8_t* and malloc)
-    uint8_t fullArray[1024];
+    uint8_t fullArray[SUPERBLOCK_SIZE];
 
 } SuperBlock;
 

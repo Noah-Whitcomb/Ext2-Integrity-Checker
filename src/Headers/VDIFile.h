@@ -1,5 +1,5 @@
-#ifndef EXT2_CHECKER_LOAD_FILE_H
-#define EXT2_CHECKER_LOAD_FILE_H
+#ifndef EXT2_CHECKER_VDIFILE_H
+#define EXT2_CHECKER_VDIFILE_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,4 +22,4 @@ void vdiRead(VDIFile* vdi, uint8_t* buffer, size_t nbytes);
 
 void fetchBlock(VDIFile* vdi, uint8_t* buffer, uint32_t blockNumber);
 
-#endif //EXT2_CHECKER_LOAD_FILE_H
+#endif //EXT2_CHECKER_VDIFILE_H

@@ -4,6 +4,7 @@
 #include "Headers/Util.h"
 #include "Headers/FileSystem.h"
 #include "Headers/IntegrityCheckers.h"
+#include "Headers/LinkedList.h"
 
 #define PATH "C:\\vdifiles\\VDITestFiles\\Good\\Test-fixed-1k.vdi"
 #define PATH_U "C:\\Users\\crisc\\VirtualBox VMs\\Ubuntu\\Ubuntu.vdi"
@@ -44,7 +45,7 @@ int main(int argc, char** argv) {
 //    {
 //        printf("inode table address of block group %d: %d\n", i, vdi->blockGroupDescriptorTable[i]->inodeTableAddress);
 //    }
-    
+
 //    uint8_t iNodeBuffer[128];
 //    for(size_t i = 1;i<999; i++)
 //    {
@@ -57,5 +58,17 @@ int main(int argc, char** argv) {
     makeBitmaps(vdi);
 
     vdiClose(vdi);
+//    struct List* list = initializeList();
+//    add(list, 6969);
+//    add(list, 696969);
+//    add(list, 42069);
+//    add(list, 5);
+//    struct node* temp = list->head;
+//    while(temp != NULL)
+//    {
+//        printf("value: %d\n", temp->value);
+//        temp = temp->nextNode;
+//    }
+//    freeList(list);
     return 0;
 }

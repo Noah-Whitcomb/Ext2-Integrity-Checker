@@ -1,7 +1,5 @@
 #include "../Headers/VDIFile.h"
 
-void vdiClose(VDIFile *vdi);
-
 VDIFile* vdiOpen(char* filename){
     VDIFile * vdi = (VDIFile*)malloc(sizeof (VDIFile));
     vdi->header = (Header*)malloc(sizeof (Header));
