@@ -5,8 +5,11 @@
 #include "VDIFile.h"
 #include "LinkedList.h"
 
-void makeBitmaps(VDIFile* vdi);
-void traverseAndMark(VDIFile *vdi, Directory *dir, char *name, uint32_t iNodeNumber, Bitmaps *bitmaps);
+int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachable, struct List *inodesReachable,
+                   struct List *blocksNotReachable, struct List *blocksReachable, struct List *badBGDescriptors,
+                   struct List *badSuperblocks, struct List *duplicateBlocks);
+void traverseAndMark(VDIFile *vdi, Directory *dir, char *name, uint32_t iNodeNumber, Bitmaps *bitmaps,
+                     uint32_t *numDirectories, uint32_t *numNonDirectories, struct List *duplicateBlocks);
 
 void freeBitmaps(Bitmaps* bitmaps, VDIFile* vdi);
 Bitmaps* initializeBitmaps(VDIFile* vdi);
@@ -18,12 +21,12 @@ int bitsCmpInodes(VDIFile *vdi, struct List *notReachable, struct List *reachabl
 int bitsCmpBlocks(VDIFile *vdi, struct List *notReachable, struct List *reachable, uint8_t original, uint8_t new,
             uint32_t byteNum, uint32_t blockGroup, uint32_t maxBits);
 
-void addBlock(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber);
-void addBlocksFromInode(VDIFile *vdi, Bitmaps *bitmaps, uint32_t iNodeNumber);
+void addBlock(VDIFile *vdi, Bitmaps *bitmaps, uint32_t blockNumber, struct List *duplicateBlocks);
+void addBlocksFromInode(VDIFile *vdi, Bitmaps *bitmaps, uint32_t iNodeNumber, struct List *duplicateBlocks);
 
-void markSingles(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber);
-void markDouble(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber);
-void markTriple(VDIFile* vdi, Bitmaps* bitmaps, uint32_t blockNumber);
+void markSingles(VDIFile *vdi, Bitmaps *bitmaps, uint32_t blockNumber, struct List *duplicateBlocks);
+void markDouble(VDIFile *vdi, Bitmaps *bitmaps, uint32_t blockNumber, struct List *duplicateBlocks);
+void markTriple(VDIFile *vdi, Bitmaps *bitmaps, uint32_t blockNumber, struct List *duplicateBlocks);
 
 //copies of superblock and block group descriptor table in block groups copies of 3, 5, 7
 

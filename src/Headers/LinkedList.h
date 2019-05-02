@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-
+#include <stdio.h>
 
 struct List
 {
@@ -11,6 +11,7 @@ struct List
     struct node* tail;
     struct List* (*initializeList)();
     void (*add)(struct List* list, uint32_t nextNode);
+    uint32_t size;
 };
 
 struct node
@@ -25,6 +26,7 @@ struct List* initializeList();
 struct node* createNode(uint32_t initialValue);
 void add(struct List* list, uint32_t nextNode);
 void freeList(struct List* list);
+void printList(struct List* list);
 void freeNodes(struct node* head);
 //TODO add list free function
 

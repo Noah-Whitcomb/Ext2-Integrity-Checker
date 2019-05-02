@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
     VDIFile* vdi = vdiOpen(PATH);
     if (vdi == NULL)
     {
-        printf("Could not read file, fix it you fucking idiot");
+        printf("Could not read file.");
         return 1;
     }
 
@@ -26,49 +26,35 @@ int main(int argc, char** argv) {
     vdiRead(vdi, superBlock, SUPERBLOCK_SIZE);
     readSuperBlock(vdi, superBlock);
 
-    // check magic of ext2 filesystem
-    if (vdi->superBlock->magic != 0xef53)
-    {
-        printBytes((uint8_t*)&vdi->superBlock->magic, 2, "Magic");
-        printf("fuck, you suck at programming and life. The magic isn't right. \n holy fuck you should have gotten this already");
-        vdiClose(vdi);
-        return 1;
-    }
-
-
     //get block descriptor table
     uint8_t blockDescTable [vdi->superBlock->blockSize];
     fetchBlock(vdi, blockDescTable, 2);
     readBlockDescTable(vdi, blockDescTable);
 
-//    for(size_t i = 0;i<vdi->superBlock->numBlockGroups;i++)
-//    {
-//        printf("inode table address of block group %d: %d\n", i, vdi->blockGroupDescriptorTable[i]->inodeTableAddress);
-//    }
+    Bitmaps* bitmaps = initializeBitmaps(vdi);
+    struct List* badSuperblocks = initializeList();
+    struct List* badBGDescriptors = initializeList();
+    struct List* inodesReachable = initializeList();
+    struct List* inodesNotReachable = initializeList();
+    struct List* blocksReachable = initializeList();
+    struct List* blocksNotReachable = initializeList();
+    struct List* duplicateBlocks = initializeList();
 
-//    uint8_t iNodeBuffer[128];
-//    for(size_t i = 1;i<999; i++)
-//    {
-//        printf("#######\nInode %d\n", i);
-//        fetchInode(vdi, iNodeBuffer, i);
-//    }
+    if(integrityCheck(vdi, bitmaps, inodesNotReachable, inodesReachable, blocksNotReachable, blocksReachable,
+                      badBGDescriptors, badSuperblocks, duplicateBlocks))
+    {
+        // do more stuff
+    }
 
-    //Inode* lost = fetchInode(vdi, 11);
-
-    makeBitmaps(vdi);
-
+    freeBitmaps(bitmaps, vdi);
+    freeList(badBGDescriptors);
+    freeList(badSuperblocks);
+    freeList(inodesReachable);
+    freeList(inodesNotReachable);
+    freeList(blocksReachable);
+    freeList(blocksNotReachable);
+    freeList(duplicateBlocks);
     vdiClose(vdi);
-//    struct List* list = initializeList();
-//    add(list, 6969);
-//    add(list, 696969);
-//    add(list, 42069);
-//    add(list, 5);
-//    struct node* temp = list->head;
-//    while(temp != NULL)
-//    {
-//        printf("value: %d\n", temp->value);
-//        temp = temp->nextNode;
-//    }
-//    freeList(list);
+
     return 0;
 }

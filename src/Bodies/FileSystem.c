@@ -221,6 +221,7 @@ uint32_t getNextEntry(VDIFile *vdi, Directory* dir)
 
     dir->cursor += entrySize;
 
+    dir->type = type;
     dir->name = name;
     dir->inodeNumber = inode;
 

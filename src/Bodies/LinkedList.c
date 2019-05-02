@@ -7,6 +7,7 @@ struct List* initializeList()
     list->head = NULL;
     list->tail = NULL;
     list->add = add;
+    list->size = 0;
     return list;
 }
 
@@ -24,10 +25,23 @@ void add(struct List* list, uint32_t nextNode)
     {
         list->tail->nextNode = createNode(nextNode);
         list->tail = list->tail->nextNode;
+        list->size++;
         return;
     }
+    list->size++;
     list->head = createNode(nextNode);
     list->tail = list->head;
+}
+
+void printList(struct List* list)
+{
+    struct node* temp = list->head;
+    while(temp != NULL)
+    {
+        printf("%d ", temp->value);
+        temp = temp->nextNode;
+    }
+    printf("\n");
 }
 
 void freeNodes(struct node* head)

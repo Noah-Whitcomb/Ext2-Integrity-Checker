@@ -132,6 +132,7 @@ typedef struct
     uint8_t* contents;
     char* name;
     uint32_t inodeNumber;
+    uint32_t type;
     //opendirectory(inode* inode, )
     // malloc array big enough to hold directory
     // read in stuff

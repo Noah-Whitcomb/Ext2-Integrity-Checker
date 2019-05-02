@@ -7,7 +7,7 @@ VDIFile* vdiOpen(char* filename){
     vdi->superBlock = (SuperBlock*)malloc(sizeof(SuperBlock));
     vdi->blockGroupDescriptorTable = NULL;
 
-    printf("%s\n",filename);
+    printf("Checking integrit of %s\n",filename);
     vdi->f = fopen(filename, "rb");
     if (vdi->f == NULL)
     {
@@ -16,7 +16,6 @@ VDIFile* vdiOpen(char* filename){
         return NULL;
     }
 
-    //error check fread??
     fread(vdi->header->preHeader, 1, 72, vdi->f);
     fread(&vdi->header->headerSize, 4, 1, vdi->f);
     fread(&vdi->header->imageType, 4, 1, vdi->f);
