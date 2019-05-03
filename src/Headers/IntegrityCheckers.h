@@ -28,6 +28,9 @@ void markSingles(VDIFile *vdi, Bitmaps *bitmaps, uint32_t blockNumber, struct Li
 void markDouble(VDIFile *vdi, Bitmaps *bitmaps, uint32_t blockNumber, struct List *duplicateBlocks);
 void markTriple(VDIFile *vdi, Bitmaps *bitmaps, uint32_t blockNumber, struct List *duplicateBlocks);
 
+void fixBadCopies(VDIFile* vdi, struct List* badSuperblocks, struct List* badBGDescriptors);
+void fixBitmaps(VDIFile* vdi, Bitmaps* bitmaps);
+
 //copies of superblock and block group descriptor table in block groups copies of 3, 5, 7
 
 #endif //EXT2_CHECKER_INTEGRITYCHECKERS_H

@@ -8,7 +8,7 @@ VDIFile* vdiOpen(char* filename){
     vdi->blockGroupDescriptorTable = NULL;
 
     printf("Checking integrit of %s\n",filename);
-    vdi->f = fopen(filename, "rb");
+    vdi->f = fopen(filename, "rb+");
     if (vdi->f == NULL)
     {
         printf("fuck");
@@ -69,7 +69,6 @@ void vdiSeek(VDIFile* vdi, long long offset, int anchor)
 // call vdiSeek before vdiRead at all times
 void vdiRead(VDIFile* vdi, uint8_t* buffer, size_t nbytes)
 {
-    // TODO: change this to dynamic if we get to it
     long long page = vdi->cursor/vdi->header->pageSize;
     long long offset = vdi->cursor%vdi->header->pageSize;
 
@@ -101,6 +100,27 @@ void fetchBlock(VDIFile* vdi, uint8_t* buffer, uint32_t blockNumber)
 {
     vdiSeek(vdi,  blockNumber*vdi->superBlock->blockSize, VDI_SET);
     vdiRead(vdi, buffer, vdi->superBlock->blockSize);
+}
+
+void vdiWrite(VDIFile* vdi, uint8_t* buffer, size_t nbytes)
+{
+    long long page = vdi->cursor/vdi->header->pageSize;
+    long long offset = vdi->cursor%vdi->header->pageSize;
+
+    long long position = page*vdi->header->pageSize+offset;
+    fseek(vdi->f, position, SEEK_SET);
+    fwrite(buffer, 1, nbytes, vdi->f);
+}
+
+void writeBlock(VDIFile* vdi, uint8_t* buffer, uint32_t blockNumber)
+{
+    vdiSeek(vdi,  blockNumber*vdi->superBlock->blockSize, VDI_SET);
+    vdiWrite(vdi, buffer, vdi->superBlock->blockSize);
+}
+void writeInt(VDIFile* vdi, uint32_t number, uint32_t blockNumber, uint32_t offset)
+{
+    vdiSeek(vdi,  blockNumber*vdi->superBlock->blockSize+offset, VDI_SET);
+    vdiWrite(vdi, (uint8_t*)&number, sizeof(uint32_t));
 }
 
 

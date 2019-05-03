@@ -49,7 +49,7 @@ void readBlockDescTable(VDIFile* vdi, uint8_t* blockDescTable)
         vdi->blockGroupDescriptorTable[i] = (BlockGroupDescriptor*)malloc(sizeof(BlockGroupDescriptor));
     }
 
-    vdi->BlockGroupDescriptorFullContents = (uint8_t*)malloc(vdi->superBlock->blockSize);
+    vdi->BlockGroupDescriptorFullContents = (uint8_t*)calloc(vdi->superBlock->blockSize, sizeof(uint8_t));
     memcpy(vdi->BlockGroupDescriptorFullContents, blockDescTable, vdi->superBlock->blockSize);
 
     for(size_t i = 0;i<vdi->superBlock->numBlockGroups;i++)

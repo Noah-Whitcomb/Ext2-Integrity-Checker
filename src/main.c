@@ -7,13 +7,13 @@
 #include "Headers/LinkedList.h"
 
 #define PATH "C:\\vdifiles\\VDITestFiles\\Good\\Test-fixed-1k.vdi"
-#define PATH_U "C:\\Users\\crisc\\VirtualBox VMs\\Ubuntu\\Ubuntu.vdi"
+#define PATH_BAD "C:\\vdifiles\\VDITestFiles\\Bad\\inode-map-1k - Copy.vdi"
 
 int main(int argc, char** argv) {
 
     //TODO: configure command line arguments for file path
 
-    VDIFile* vdi = vdiOpen(PATH);
+    VDIFile* vdi = vdiOpen(PATH_BAD);
     if (vdi == NULL)
     {
         printf("Could not read file.");
@@ -41,10 +41,29 @@ int main(int argc, char** argv) {
     struct List* duplicateBlocks = initializeList();
 
     if(integrityCheck(vdi, bitmaps, inodesNotReachable, inodesReachable, blocksNotReachable, blocksReachable,
-                      badBGDescriptors, badSuperblocks, duplicateBlocks))
+                      badBGDescriptors, badSuperblocks, duplicateBlocks) != 1)
     {
-        // do more stuff
+        int count = 0;
+        if(inodesNotReachable->size != 0 || blocksNotReachable->size != 0)
+        {
+            printf("Fixing bitmaps that mark unreachable blocks/inodes as used...\n");
+            fixBitmaps(vdi, bitmaps);
+            count = 1;
+        }
+        if(badBGDescriptors->size != 0 || badSuperblocks->size != 0)
+        {
+            printf("Fixing bad copies of superblock and/or block group descriptor table...\n");
+            fixBadCopies(vdi, badSuperblocks, badBGDescriptors);
+            count = 1;
+        }
+        if(count)
+        {
+            printf("Bad bitmaps and/or superblock/block group descriptor table copies fixed. You're welcome.\n");
+        }
+
     }
+
+
 
     freeBitmaps(bitmaps, vdi);
     freeList(badBGDescriptors);

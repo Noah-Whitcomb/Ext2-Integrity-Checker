@@ -5,10 +5,8 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
                    struct List *badSuperblocks, struct List *duplicateBlocks)
 {
     int isGoodFileSystem = 1;
-    uint32_t* numDirectories = (uint32_t*)malloc(sizeof(uint32_t));
-    uint32_t* numNonDirectories = (uint32_t*)malloc(sizeof(uint32_t));
-    (*numDirectories) = 0;
-    (*numNonDirectories) = 0;
+    uint32_t numDirectories = 0;
+    uint32_t numNonDirectories = 0;
 
     Directory* dir = openDirectory(vdi, 2);
 
@@ -19,7 +17,7 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
         addBlocksFromInode(vdi, bitmaps, i, duplicateBlocks);
     }
 
-    traverseAndMark(vdi, dir, "root", 2, bitmaps, numDirectories, numNonDirectories, duplicateBlocks);
+    traverseAndMark(vdi, dir, "root", 2, bitmaps, &numDirectories, &numNonDirectories, duplicateBlocks);
 
     // mark off blocks from block group descriptors
     for(size_t i = 0; i < vdi->superBlock->numBlockGroups; i++)
@@ -43,9 +41,9 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
     {
         if(checkPowerOf(3, i) || checkPowerOf(5, i) || checkPowerOf(7, i))
         {
-            for(size_t j = 1; j<3; j++)
+            for(size_t j = 0; j<2; j++)
             {
-                addBlock(vdi, bitmaps, i*vdi->superBlock->blocksPerGroup + j, duplicateBlocks);
+                addBlock(vdi, bitmaps, i*vdi->superBlock->blocksPerGroup + j + vdi->superBlock->superBlockNumber, duplicateBlocks);
             }
             uint8_t superBlockCopy[SUPERBLOCK_SIZE];
             uint8_t blockGroupDescriptorCopy[vdi->superBlock->blockSize];
@@ -58,7 +56,7 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
             }
             if(memcmp(vdi->BlockGroupDescriptorFullContents, blockGroupDescriptorCopy, vdi->superBlock->blockSize) != 0)
             {
-                badBGDescriptors->add(badSuperblocks, i);
+                badBGDescriptors->add(badBGDescriptors, i);
                 isGoodFileSystem = 0;
             }
 
@@ -80,10 +78,10 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
     }
     // print summary
     printf("##############\nFields reported by superblock/block group descriptor table:\n##############\n");
-    printf("\nTotal file system size: %d bytes\n", vdi->superBlock->totalBlocks*vdi->superBlock->blockSize);
+    printf("Total file system size: %d bytes\n", vdi->superBlock->totalBlocks*vdi->superBlock->blockSize);
     printf("Total space unused: %d bytes\n", vdi->superBlock->unallocatedBlocks*vdi->superBlock->blockSize);
     printf("Total space used: %d bytes\n", (vdi->superBlock->totalBlocks-vdi->superBlock->unallocatedBlocks)*vdi->superBlock->blockSize);
-    printf("Total inodes: %d\n", vdi->superBlock->totalInodes);
+    printf("Total inodes: %d\n", vdi->superBlock->totalInodes-vdi->superBlock->unallocatedInodes);
     printf("Number of existing Directories: %d\n", totalDirectories);
     printf("Number of block groups: %d\n", vdi->superBlock->numBlockGroups);
     printf("------------------------\n");
@@ -127,7 +125,7 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
     else
     {
         isGoodFileSystem = 0;
-        printf("Bad superblock copies: ");
+        printf("Bad superblock copies in block groups: ");
         printList(badSuperblocks);
     }
     if(badBGDescriptors->size == 0)
@@ -137,7 +135,7 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
     else
     {
         isGoodFileSystem = 0;
-        printf("Bad block group descriptor table copies: ");
+        printf("Bad block group descriptor table copies in block groups: ");
         printList(badBGDescriptors);
     }
     if(inodesNotReachable->size == 0)
@@ -180,22 +178,22 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
         printf("Unused blocks referenced by inodes:");
         printList(blocksReachable);
     }
-    if((vdi->superBlock->totalInodes-vdi->superBlock->unallocatedInodes) == *numNonDirectories+*numDirectories+9)
+    if((vdi->superBlock->totalInodes-vdi->superBlock->unallocatedInodes) == numNonDirectories+numDirectories+9)
     {
         printf("Total inodes from superblock is correct\n");
     }
     else
     {
         isGoodFileSystem = 0;
-        printf("Total inodes from superblock is WRONG - corect value is %d\n", *numNonDirectories+*numDirectories+9);
+        printf("Total inodes from superblock is WRONG - corect value is %d\n", numNonDirectories+numDirectories+9);
     }
-    if(totalDirectories == *numDirectories)
+    if(totalDirectories == numDirectories)
     {
         printf("Number of directories from block group descriptor table is correct\n");
     }
     else
     {
-        printf("Number of directories from block group descriptor table is WRONG - correct value is %d\n", *numDirectories);
+        printf("Number of directories from block group descriptor table is WRONG - correct value is %d\n", numDirectories);
         isGoodFileSystem = 0;
     }
     if(isGoodFileSystem)
@@ -243,7 +241,6 @@ void addInode(VDIFile* vdi, Bitmaps* bitmaps, uint32_t iNodeNumber)
     uint32_t byteIndex = blockGroupIndex/8;
     uint32_t bitIndex = blockGroupIndex%8;
     uint8_t temp = 1u << bitIndex;
-    //if(bitIndex == 0) byteIndex--;
     bitmaps->iNodeBitmaps[blockGroup][byteIndex] |= temp;
 
 }
@@ -330,14 +327,7 @@ void markTriple(VDIFile *vdi, Bitmaps *bitmaps, uint32_t blockNumber, struct Lis
 
 void addBlock(VDIFile *vdi, Bitmaps *bitmaps, uint32_t blockNumber, struct List *duplicateBlocks)
 {
-//    if(blockNumber == 130048)
-//    {
-//        int n = 5;
-//        printf("%d", n);
-//    }
-    // WHY DOES THIS WORK????
     blockNumber -= vdi->superBlock->superBlockNumber;
-    // this takes away almost all of out problems but I hate it
     uint32_t blockGroup = blockNumber/vdi->superBlock->blocksPerGroup;
     uint32_t blockIndex = blockNumber%vdi->superBlock->blocksPerGroup;
     uint32_t byteIndex = blockIndex/8;
@@ -365,9 +355,9 @@ int bitmapsCmp(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachable, 
 
         uint8_t freeBlockBitmap[1024];
         fetchBlock(vdi, freeBlockBitmap, vdi->blockGroupDescriptorTable[blockGroup]->blockUsageBitmap);
-        printf("##################################\n");
-        printBytes(freeBlockBitmap, vdi->superBlock->blocksPerGroup/8, "original");
-        printBytes(bitmaps->blockBitmaps[blockGroup], vdi->superBlock->blocksPerGroup/8, "new");
+//        printf("##################################\n");
+//        printBytes(freeBlockBitmap, vdi->superBlock->blocksPerGroup/8, "original");
+//        printBytes(bitmaps->blockBitmaps[blockGroup], vdi->superBlock->blocksPerGroup/8, "new");
 
         for(uint32_t byteIndex = 0; byteIndex<vdi->superBlock->blocksPerGroup/8; byteIndex++)
         {
@@ -394,6 +384,7 @@ int bitmapsCmp(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachable, 
     fetchBlock(vdi, freeBlockBitmap, vdi->blockGroupDescriptorTable[vdi->superBlock->numBlockGroups-1]->blockUsageBitmap);
 
     uint32_t numBlocks = vdi->superBlock->totalBlocks%vdi->superBlock->blocksPerGroup-vdi->superBlock->superBlockNumber;
+    if(numBlocks == 0) numBlocks = vdi->superBlock->blocksPerGroup;
     uint32_t numBytesBlocks = numBlocks/8;
     uint32_t bitsInLastBlockByte = numBlocks%8;
 
@@ -422,6 +413,7 @@ int bitmapsCmp(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachable, 
     }
 
     uint32_t numInodes = vdi->superBlock->totalInodes%vdi->superBlock->inodesPerGroup;
+    if(numInodes == 0) numInodes = vdi->superBlock->inodesPerGroup;
     uint32_t numBytesInodes = numInodes/8;
     uint32_t bitsInLastInodeByte = numInodes%8;
     if(bitsInLastInodeByte == 0) bitsInLastInodeByte = 8;
@@ -504,6 +496,85 @@ int bitsCmpBlocks(VDIFile *vdi, struct List *notReachable, struct List *reachabl
         }
     }
     return count;
+}
+
+void fixBadCopies(VDIFile* vdi, struct List* badSuperblocks, struct List* badBGDescriptors)
+{
+    struct node* temp = badSuperblocks->head;
+    while(temp != NULL)
+    {
+        writeBlock(vdi, vdi->superBlock->fullArray, temp->value*vdi->superBlock->blocksPerGroup+1);
+        temp = temp->nextNode;
+    }
+
+    struct node* temp2 = badBGDescriptors->head;
+    while(temp2 != NULL)
+    {
+        writeBlock(vdi, vdi->BlockGroupDescriptorFullContents, temp2->value*vdi->superBlock->blocksPerGroup+2);
+        temp2 = temp2->nextNode;
+    }
+}
+
+void fixBitmaps(VDIFile* vdi, Bitmaps* bitmaps)
+{
+    uint32_t totalUnallocatedInodes = 0;
+    uint32_t totalUnallocatedBlocks = 0;
+
+    for(uint32_t i = 0; i<vdi->superBlock->numBlockGroups; i++)
+    {
+        uint32_t inodesCount;
+        uint32_t blocksCount;
+
+        uint16_t newUnallocatedBlocks;
+        uint16_t newUnallocatedInodes;
+
+        if(i != vdi->superBlock->numBlockGroups-1)
+        {
+            inodesCount = numEntriesBitmap(bitmaps->iNodeBitmaps[i], vdi->superBlock->inodesPerGroup);
+            blocksCount = numEntriesBitmap(bitmaps->blockBitmaps[i], vdi->superBlock->blocksPerGroup);
+            newUnallocatedBlocks = vdi->superBlock->blocksPerGroup-blocksCount;
+            newUnallocatedInodes = vdi->superBlock->inodesPerGroup-inodesCount;
+        }
+        else
+        {
+            uint32_t blocksLastGroup = vdi->superBlock->totalBlocks%vdi->superBlock->blocksPerGroup;
+            uint32_t inodesLastGroup = vdi->superBlock->totalInodes%vdi->superBlock->inodesPerGroup;
+            if(blocksLastGroup == 0) blocksLastGroup = vdi->superBlock->blocksPerGroup;
+            if(inodesLastGroup == 0) inodesLastGroup = vdi->superBlock->inodesPerGroup;
+            inodesCount = numEntriesBitmap(bitmaps->iNodeBitmaps[i], inodesLastGroup);
+            blocksCount = numEntriesBitmap(bitmaps->blockBitmaps[i], blocksLastGroup);
+            newUnallocatedBlocks = blocksLastGroup-blocksCount;
+            newUnallocatedInodes = inodesLastGroup-inodesCount;
+        }
+        
+        totalUnallocatedBlocks += newUnallocatedBlocks;
+        totalUnallocatedInodes += newUnallocatedInodes;
+
+        memcpy(vdi->BlockGroupDescriptorFullContents+BLOCK_DESCRIPTOR_SIZE*i+12, (uint8_t *)&newUnallocatedBlocks, 2);
+        memcpy(vdi->BlockGroupDescriptorFullContents+BLOCK_DESCRIPTOR_SIZE*i+14, (uint8_t *)&newUnallocatedInodes, 2);
+
+//        writeInt(vdi, newUnallocatedBlocks, vdi->superBlock->superBlockNumber+1, BLOCK_DESCRIPTOR_SIZE*i+12);
+//        writeInt(vdi, newUnallocatedInodes, vdi->superBlock->superBlockNumber+1, BLOCK_DESCRIPTOR_SIZE*i+14);
+
+        writeBlock(vdi, bitmaps->blockBitmaps[i], vdi->blockGroupDescriptorTable[i]->blockUsageBitmap);
+        writeBlock(vdi, bitmaps->iNodeBitmaps[i], vdi->blockGroupDescriptorTable[i]->inodeUsageBitmap);
+    }
+
+    memcpy(vdi->superBlock->fullArray + 12, (uint8_t*)&totalUnallocatedBlocks, 4);
+    memcpy(vdi->superBlock->fullArray + 16, (uint8_t*)&totalUnallocatedInodes, 4);
+
+//    writeInt(vdi, totalUnallocatedBlocks, vdi->superBlock->superBlockNumber, 12);
+//    writeInt(vdi, totalUnallocatedInodes, vdi->superBlock->superBlockNumber, 16);
+
+    for(uint32_t i = 0; i<vdi->superBlock->numBlockGroups; i++)
+    {
+        if (checkPowerOf(3, i) || checkPowerOf(5, i) || checkPowerOf(7, i) || i == 0)
+        {
+            writeBlock(vdi, vdi->superBlock->fullArray, i*vdi->superBlock->blocksPerGroup+ vdi->superBlock->superBlockNumber);
+            writeBlock(vdi, vdi->BlockGroupDescriptorFullContents, i*vdi->superBlock->blocksPerGroup + vdi->superBlock->superBlockNumber+1);
+        }
+    }
+
 }
 
 void freeBitmaps(Bitmaps* bitmaps, VDIFile* vdi)

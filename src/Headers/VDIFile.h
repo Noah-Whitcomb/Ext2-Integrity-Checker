@@ -19,7 +19,10 @@ VDIFile* vdiOpen(char* filename);
 void vdiClose(VDIFile* vdi);
 void vdiSeek(VDIFile* vdi, long long offset, int anchor);
 void vdiRead(VDIFile* vdi, uint8_t* buffer, size_t nbytes);
-
 void fetchBlock(VDIFile* vdi, uint8_t* buffer, uint32_t blockNumber);
+
+void vdiWrite(VDIFile* vdi, uint8_t* buffer, size_t nbytes);
+void writeBlock(VDIFile* vdi, uint8_t* buffer, uint32_t blockNumber);
+void writeInt(VDIFile* vdi, uint32_t number, uint32_t blockNumber, uint32_t offset);
 
 #endif //EXT2_CHECKER_VDIFILE_H

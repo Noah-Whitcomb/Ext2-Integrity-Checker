@@ -85,3 +85,21 @@ uint32_t getNumBlockGroups(const VDIFile* vdi)
     }
     else return 0;
 }
+
+uint32_t numEntriesBitmap(const uint8_t* bitmap, uint32_t numEntries)
+{
+    uint32_t count = 0;
+    for(uint32_t i = 0; i<numEntries; i++)
+    {
+        uint32_t byteIndex = i/8;
+        uint32_t bitIndex = i%8;
+
+        uint8_t temp = bitmap[byteIndex];
+        temp = (temp >> bitIndex) & 1u;
+        if(temp == 1u)
+        {
+            count++;
+        }
+    }
+    return count;
+}
