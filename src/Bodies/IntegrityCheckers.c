@@ -33,7 +33,7 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
     }
 
     // mark off blocks 0, 1, 2 from block group 0
-    for(size_t j = 0; j<3; j++)
+    for(size_t j = 0; j<2; j++)
     {
         addBlock(vdi, bitmaps, j + vdi->superBlock->superBlockNumber, duplicateBlocks);
     }
@@ -43,7 +43,7 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
     {
         if(checkPowerOf(3, i) || checkPowerOf(5, i) || checkPowerOf(7, i))
         {
-            for(size_t j = 1; j<4; j++)
+            for(size_t j = 1; j<3; j++)
             {
                 addBlock(vdi, bitmaps, i*vdi->superBlock->blocksPerGroup + j, duplicateBlocks);
             }
@@ -72,29 +72,14 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
         isGoodFileSystem = 0;
     }
 
-    //check magic bytes in superblock
-    if(vdi->superBlock->magic != 0xef53)
-    {
-        isGoodFileSystem = 0;
-    }
-
-    // check number of files and directories matches with superblock and bg descriptors
+    //find total directories from block group descriptor table
     uint32_t totalDirectories = 0;
     for(uint32_t i = 0; i<vdi->superBlock->numBlockGroups; i++)
     {
         totalDirectories += vdi->blockGroupDescriptorTable[i]->numDirectories;
     }
-    if((vdi->superBlock->totalInodes-vdi->superBlock->unallocatedInodes) != *numNonDirectories+*numDirectories+9)
-    {
-        isGoodFileSystem = 0;
-    }
-    if(totalDirectories != *numDirectories)
-    {
-        isGoodFileSystem = 0;
-    }
     // print summary
-    printf("Integrity check summary\n##############\n");
-    printf("Fields reported by superblock/block group descriptor table:\n");
+    printf("##############\nFields reported by superblock/block group descriptor table:\n##############\n");
     printf("\nTotal file system size: %d bytes\n", vdi->superBlock->totalBlocks*vdi->superBlock->blockSize);
     printf("Total space unused: %d bytes\n", vdi->superBlock->unallocatedBlocks*vdi->superBlock->blockSize);
     printf("Total space used: %d bytes\n", (vdi->superBlock->totalBlocks-vdi->superBlock->unallocatedBlocks)*vdi->superBlock->blockSize);
@@ -121,25 +106,19 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
 //    • No unused inode may be reachable from the root directory
 //    • Every directory entry must reference an in-use inode TODO ask kramer
 //    • Every used data block must be referenced by exactly one inode, either as data or as an
-//    indirect block
+//    indirect block TODO ask kramer can we just use duplicate blocks from any source
 //    • No unused data block may be referenced by any inode
 //    • The number of existing files reported by the superblock must be correct
 //    • The number of existing directories reported by the superblock must be correct
-    if(isGoodFileSystem)
-    {
-        printf("State of file system is GOOD\n");
-    }
-    else
-    {
-        printf("State of file system is BAD - see details below\n");
-    }
-    if(vdi->superBlock->magic != 0xef53)
-    {
-        printf("Superblock magic value (0xef53) is incorrect\n");
-    }
-    else
+    printf("##############\nIntegrity check summary\n##############\n");
+    if(vdi->superBlock->magic == 0xef53)
     {
         printf("Superblock magic value is correct\n");
+    }
+    else
+    {
+        isGoodFileSystem = 0;
+        printf("Superblock magic value (0xEF53) is incorrect\n");
     }
     if(badSuperblocks->size == 0)
     {
@@ -147,6 +126,7 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
     }
     else
     {
+        isGoodFileSystem = 0;
         printf("Bad superblock copies: ");
         printList(badSuperblocks);
     }
@@ -156,6 +136,7 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
     }
     else
     {
+        isGoodFileSystem = 0;
         printf("Bad block group descriptor table copies: ");
         printList(badBGDescriptors);
     }
@@ -165,6 +146,7 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
     }
     else
     {
+        isGoodFileSystem = 0;
         printf("Inodes marked as used but not reachable: ");
         printList(inodesNotReachable);
     }
@@ -174,36 +156,58 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
     }
     else
     {
+        isGoodFileSystem = 0;
         printf("Inodes marked as unused but reachable from root: ");
         printList(inodesReachable);
     }
+    if(duplicateBlocks->size == 0)
+    {
+        printf("No blocks referenced by more than one inode\n");
+    }
+    else
+    {
+        isGoodFileSystem = 0;
+        printf("Blocks referenced more than once: ");
+        printList(duplicateBlocks);
+    }
+    if(blocksReachable->size == 0)
+    {
+        printf("No unused blocks referenced by inodes\n");
+    }
+    else
+    {
+        isGoodFileSystem = 0;
+        printf("Unused blocks referenced by inodes:");
+        printList(blocksReachable);
+    }
+    if((vdi->superBlock->totalInodes-vdi->superBlock->unallocatedInodes) == *numNonDirectories+*numDirectories+9)
+    {
+        printf("Total inodes from superblock is correct\n");
+    }
+    else
+    {
+        isGoodFileSystem = 0;
+        printf("Total inodes from superblock is WRONG - corect value is %d\n", *numNonDirectories+*numDirectories+9);
+    }
+    if(totalDirectories == *numDirectories)
+    {
+        printf("Number of directories from block group descriptor table is correct\n");
+    }
+    else
+    {
+        printf("Number of directories from block group descriptor table is WRONG - correct value is %d\n", *numDirectories);
+        isGoodFileSystem = 0;
+    }
+    if(isGoodFileSystem)
+    {
+        printf("State of file system is GOOD\n");
+    }
+    else
+    {
+        printf("State of file system is BAD - see details below\n");
+    }
 
-//    struct List* temp = blocksNotReachable;
-//    printf("Not reachable: \n");
-//    int count = 0;
-//    while(temp->head != NULL)
-//    {
-//        printf("Block group: %d\t", temp->head->value/vdi->superBlock->blocksPerGroup);
-//        printf("Block number: %d\n", temp->head->value);
-////        uint8_t bl[1024];
-////        fetchBlock(vdi, bl, temp->head->value);
-////        printBytes(bl, 1024, "block");
-//        temp->head = temp->head->nextNode;
-//        count++;
-//    }
-//    printf("not reachable count: %d\n", count);
-//    printf("\n#########\n");
-//    struct List* temp2 = blocksReachable;
-//    printf("Reachable:\n");
-//    int count2 = 0;
-//    while(temp2->head != NULL)
-//    {
-//        printf("Block group: %d\t", temp2->head->value/vdi->superBlock->blocksPerGroup);
-//        printf("Block number: %d\n", temp2->head->value);
-//        temp2->head = temp2->head->nextNode;
-//        count2++;
-//    }
-//    printf("reachable count: %d\n", count2);
+
 
     closeDirectory(dir);
     return isGoodFileSystem;
@@ -361,9 +365,9 @@ int bitmapsCmp(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachable, 
 
         uint8_t freeBlockBitmap[1024];
         fetchBlock(vdi, freeBlockBitmap, vdi->blockGroupDescriptorTable[blockGroup]->blockUsageBitmap);
-//        printf("##################################\n");
-//        printBytes(freeInodeBitmap, vdi->superBlock->inodesPerGroup/8, "original");
-//        printBytes(bitmaps->iNodeBitmaps[blockGroup], vdi->superBlock->inodesPerGroup/8, "new");
+        printf("##################################\n");
+        printBytes(freeBlockBitmap, vdi->superBlock->blocksPerGroup/8, "original");
+        printBytes(bitmaps->blockBitmaps[blockGroup], vdi->superBlock->blocksPerGroup/8, "new");
 
         for(uint32_t byteIndex = 0; byteIndex<vdi->superBlock->blocksPerGroup/8; byteIndex++)
         {
