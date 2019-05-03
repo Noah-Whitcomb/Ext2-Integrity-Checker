@@ -77,7 +77,7 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
         totalDirectories += vdi->blockGroupDescriptorTable[i]->numDirectories;
     }
     // print summary
-    printf("##############\nFields reported by superblock/block group descriptor table:\n##############\n");
+    printf("##############\nFields reported by superblock/block group descriptor table\n##############\n");
     printf("Total file system size: %d bytes\n", vdi->superBlock->totalBlocks*vdi->superBlock->blockSize);
     printf("Total space unused: %d bytes\n", vdi->superBlock->unallocatedBlocks*vdi->superBlock->blockSize);
     printf("Total space used: %d bytes\n", (vdi->superBlock->totalBlocks-vdi->superBlock->unallocatedBlocks)*vdi->superBlock->blockSize);
@@ -96,18 +96,6 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
         printf("    Number of directories in group: %d\n", vdi->blockGroupDescriptorTable[i]->numDirectories);
     }
     printf("------------------------\n");
-
-//    The superblock must have the appropriate magic number
-//    • All copies of the superblock must be consistent
-//    • All copies of the block group table must be consistent
-//    • Every inode marked as used must be reachable from the root directory
-//    • No unused inode may be reachable from the root directory
-//    • Every directory entry must reference an in-use inode TODO ask kramer
-//    • Every used data block must be referenced by exactly one inode, either as data or as an
-//    indirect block TODO ask kramer can we just use duplicate blocks from any source
-//    • No unused data block may be referenced by any inode
-//    • The number of existing files reported by the superblock must be correct
-//    • The number of existing directories reported by the superblock must be correct
     printf("##############\nIntegrity check summary\n##############\n");
     if(vdi->superBlock->magic == 0xef53)
     {
@@ -202,11 +190,9 @@ int integrityCheck(VDIFile *vdi, Bitmaps *bitmaps, struct List *inodesNotReachab
     }
     else
     {
-        printf("State of file system is BAD - see details below\n");
+        printf("State of file system is BAD\n");
     }
-
-
-
+    
     closeDirectory(dir);
     return isGoodFileSystem;
 }
@@ -546,7 +532,7 @@ void fixBitmaps(VDIFile* vdi, Bitmaps* bitmaps)
             newUnallocatedBlocks = blocksLastGroup-blocksCount;
             newUnallocatedInodes = inodesLastGroup-inodesCount;
         }
-        
+
         totalUnallocatedBlocks += newUnallocatedBlocks;
         totalUnallocatedInodes += newUnallocatedInodes;
 

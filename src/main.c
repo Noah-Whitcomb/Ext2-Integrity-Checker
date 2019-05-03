@@ -6,14 +6,15 @@
 #include "Headers/IntegrityCheckers.h"
 #include "Headers/LinkedList.h"
 
-#define PATH "C:\\vdifiles\\VDITestFiles\\Good\\Test-fixed-1k.vdi"
+#define PATH_GOOD "C:\\vdifiles\\VDITestFiles\\Good\\Test-fixed-1k.vdi"
 #define PATH_BAD "C:\\vdifiles\\VDITestFiles\\Bad\\inode-map-1k - Copy.vdi"
+#define PATH_BAD2 "C:\\vdifiles\\VDITestFiles\\Bad\\block-map-1k - Copy.vdi"
 
 int main(int argc, char** argv) {
 
     //TODO: configure command line arguments for file path
 
-    VDIFile* vdi = vdiOpen(PATH_BAD);
+    VDIFile* vdi = vdiOpen(PATH_BAD2);
     if (vdi == NULL)
     {
         printf("Could not read file.");

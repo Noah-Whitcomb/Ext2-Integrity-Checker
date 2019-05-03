@@ -7,7 +7,7 @@ VDIFile* vdiOpen(char* filename){
     vdi->superBlock = (SuperBlock*)malloc(sizeof(SuperBlock));
     vdi->blockGroupDescriptorTable = NULL;
 
-    printf("Checking integrit of %s\n",filename);
+    printf("Checking integrity of %s\n",filename);
     vdi->f = fopen(filename, "rb+");
     if (vdi->f == NULL)
     {
