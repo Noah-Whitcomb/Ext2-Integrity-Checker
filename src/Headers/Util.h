@@ -11,7 +11,6 @@
 
 void printBytes(const uint8_t* buffer, size_t size, char* description);
 uint32_t getNumBlockGroups(const VDIFile* vdi);
-void printHeader(Header* head);
 uint32_t power(uint32_t base, uint32_t power);
 int checkPowerOf(uint32_t power, uint32_t number);
 uint32_t numEntriesBitmap(const uint8_t* bitmap, uint32_t numEntries);

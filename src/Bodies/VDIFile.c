@@ -7,11 +7,10 @@ VDIFile* vdiOpen(char* filename){
     vdi->superBlock = (SuperBlock*)malloc(sizeof(SuperBlock));
     vdi->blockGroupDescriptorTable = NULL;
 
-    printf("Checking integrity of %s\n",filename);
+    printf("Analyzing %s...\n",filename);
     vdi->f = fopen(filename, "rb+");
     if (vdi->f == NULL)
     {
-        printf("fuck");
         vdiClose(vdi);
         return NULL;
     }
@@ -116,11 +115,6 @@ void writeBlock(VDIFile* vdi, uint8_t* buffer, uint32_t blockNumber)
 {
     vdiSeek(vdi,  blockNumber*vdi->superBlock->blockSize, VDI_SET);
     vdiWrite(vdi, buffer, vdi->superBlock->blockSize);
-}
-void writeInt(VDIFile* vdi, uint32_t number, uint32_t blockNumber, uint32_t offset)
-{
-    vdiSeek(vdi,  blockNumber*vdi->superBlock->blockSize+offset, VDI_SET);
-    vdiWrite(vdi, (uint8_t*)&number, sizeof(uint32_t));
 }
 
 

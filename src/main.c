@@ -12,9 +12,13 @@
 
 int main(int argc, char** argv) {
 
-    //TODO: configure command line arguments for file path
+    if(argc != 2)
+    {
+        printf("Please supply only 1 command line argument - path to vdi file\n");
+        return 0;
+    }
 
-    VDIFile* vdi = vdiOpen(PATH_BAD2);
+    VDIFile* vdi = vdiOpen(argv[1]);
     if (vdi == NULL)
     {
         printf("Could not read file.");
@@ -63,8 +67,6 @@ int main(int argc, char** argv) {
         }
 
     }
-
-
 
     freeBitmaps(bitmaps, vdi);
     freeList(badBGDescriptors);

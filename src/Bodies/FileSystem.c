@@ -32,13 +32,11 @@ void readSuperBlock(VDIFile* vdi, uint8_t* superblock)
     vdi->superBlock->numBlockGroups = getNumBlockGroups(vdi);
     if(vdi->superBlock->numBlockGroups == 0)
     {
-        printf("did not get page group number because your mom is dumb");
+        printf("Error determining number of block groups.\n");
         assert(1);
     }
 
     vdi->superBlock->blockSize = 1024u << vdi->superBlock->log2BlockSize;
-
-    //TODO: if majorPortion >= 1, read in extended vdi notNeeded (ask kramer)
 }
 
 void readBlockDescTable(VDIFile* vdi, uint8_t* blockDescTable)

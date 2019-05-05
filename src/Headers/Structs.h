@@ -133,20 +133,6 @@ typedef struct
     char* name;
     uint32_t inodeNumber;
     uint32_t type;
-    //opendirectory(inode* inode, )
-    // malloc array big enough to hold directory
-    // read in stuff
-    //rewindDirectory()
-    // set cursor to 0 or 24 to skip . and .. directories
-    //getNextEntry()
-    // return true if there is a next entry, false otherwise
-    // uses cursor to go into array thats been read in, get next directory entry (inode and name)
-    //   then move cursor to next record
-    //   if cursor = filesize return false
-    //   else return true
-    //
-
-    //
 } Directory;
 
 typedef struct

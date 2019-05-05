@@ -7,6 +7,7 @@ struct List* initializeList()
     list->head = NULL;
     list->tail = NULL;
     list->add = add;
+    list->printList = printList;
     list->size = 0;
     return list;
 }
